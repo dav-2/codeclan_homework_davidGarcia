@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+install.packages('devtools')
+devtools::install_github('codeclan/CodeClanData')
+library(CodeClanData)
+```
+1 MVP
+```{r}
+CodeClanData::beer
+```
+```{r}
+CodeClanData::temp
+```
+```{r}
+CodeClanData::game_of_thrones
+```
+```{r}
+is.data.frame(beer)
+is.matrix(temp)
+is.list(game_of_thrones)
+sum(temp)
+sum(temp[1:6, 1:4])
+sum(temp[1:5, 1])
+
+mean(temp)
+mean(temp[1:6, 1:4])
+mean(temp[1:5, 1])
+```
+1.1 Beer
+```{r}
+mean(temp)
+str(beer)
+beer$brand[beer$percent == max(beer$percent)]
+low_percentage_alcohol <- beer[beer$percent < 5,]
+medium_percentage_alcohol <- beer[beer$percent < 8,]
+high_percentage_alcohol <- beer[beer$percent >=8,]
+```
+1.2 Temperatures
+```{r}
+colMeans(temp)
+max(temp)
+```
+1.3 Game of Thrones
+```{r}
+length(game_of_thrones$characters)
+game_of_thrones$characters[[2]]
+```
+
