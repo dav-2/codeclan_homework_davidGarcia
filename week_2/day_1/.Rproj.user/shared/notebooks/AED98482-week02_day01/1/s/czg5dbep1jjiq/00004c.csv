@@ -1,0 +1,12 @@
+"0","read_csv(""data/steam-200k-sample.csv"", skip = 5, col_names = c("
+"0","  ""customer id"", ""game name"", ""what"", ""value"", ""bought online"""
+"0","))"
+"2","Parsed with column specification:
+cols(
+  `customer id` = [32mcol_double()[39m,
+  `game name` = [31mcol_character()[39m,
+  what = [31mcol_character()[39m,
+  value = [32mcol_double()[39m,
+  `bought online` = [32mcol_double()[39m
+)
+"

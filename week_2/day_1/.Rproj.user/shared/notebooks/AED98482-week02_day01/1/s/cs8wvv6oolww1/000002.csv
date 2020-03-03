@@ -1,0 +1,16 @@
+"0","read_tsv(""data/historic_eu_payments.tsv"")"
+"2","Parsed with column specification:
+cols(
+  Country = [31mcol_character()[39m,
+  NUTS1_ID = [31mcol_character()[39m,
+  NUTS2_ID = [31mcol_character()[39m,
+  NUTS2_name = [31mcol_character()[39m,
+  Fund = [31mcol_character()[39m,
+  Year = [32mcol_double()[39m,
+  Programming_Period = [31mcol_character()[39m,
+  EU_Payment_annual = [32mcol_double()[39m,
+  Modelled_annual_expenditure = [32mcol_double()[39m,
+  Standard_Deviation_of_annual_expenditure = [32mcol_double()[39m,
+  Standard_Error_of_modelled_annual_expenditure = [32mcol_double()[39m
+)
+"

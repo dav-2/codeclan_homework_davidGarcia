@@ -1,0 +1,27 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583214952284.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2587617775",
+    "id" : "7A6AF01F",
+    "lastKnownWriteTime" : 1583221588,
+    "last_content_update" : 1583221588072,
+    "path" : "~/codeclan_homework_davidGarcia/week_2/day_1/week02_day01.Rmd",
+    "project_path" : "week02_day01.Rmd",
+    "properties" : {
+        "chunk_output_type" : "inline",
+        "cursorPosition" : "126,3",
+        "scrollLine" : "112",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

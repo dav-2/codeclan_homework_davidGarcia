@@ -1,0 +1,12 @@
+Edinburgh
+Rank; Locality; Population; Status; Council Area
+1;  Glasgow; 612040; City; Glasgow City
+2; Edinburgh; 488050; City; City of Edinburgh
+3; Aberdeen; 200680; City; Aberdeen City
+4; Dundee; 148280; City; Dundee City
+5; Paisley; 77220; Town; Renfrewshire
+6; East Kilbride; 75120; Town; South Lanarkshire
+7; Livingston; 57030; Town; West Lothian
+8; Hamilton; 54080; Town; South Lanarkshire
+9; Dunfermline; 53100; Town; Fife
+10; Cumbernauld; 50920; Town; North Lanarkshire

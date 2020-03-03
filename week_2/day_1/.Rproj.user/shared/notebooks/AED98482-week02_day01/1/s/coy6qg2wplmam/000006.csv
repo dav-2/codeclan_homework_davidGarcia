@@ -1,0 +1,31 @@
+"0","library(gdata)
+"
+"2","gdata: read.xls support for
+gdata: 'XLS' (Excel 97-2004)
+gdata: files ENABLED.
+"
+"2","
+"
+"2","gdata: read.xls support for
+gdata: 'XLSX' (Excel 2007+)
+gdata: files ENABLED.
+"
+"2","
+Attaching package: ‘gdata’
+
+"
+"2","The following object is masked from ‘package:stats’:
+
+    nobs
+
+"
+"2","The following object is masked from ‘package:utils’:
+
+    object.size
+
+"
+"2","The following object is masked from ‘package:base’:
+
+    startsWith
+
+"

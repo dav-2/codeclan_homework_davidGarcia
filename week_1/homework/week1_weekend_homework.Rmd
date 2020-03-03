@@ -11,16 +11,16 @@ library(dplyr)
 2.2.1
 ```{r}
 multiply_by15_add4 <- function(x){
-  return(x * 15 + 4)
+  x * 15 + 4
 }
 ```
 2.2.2 
 ```{r}
 concept_organizer <- function(x){
   if (x %in% c("goose", "duck", "pigeon")){
-    print("bird")
+    return("bird")  #return, not print
   } else{
-    print("not bird")
+    return("not bird")
   }
 }
 ```
@@ -29,9 +29,9 @@ concept_organizer <- function(x){
 multiply_by_10 <- function(x = 1){
   if (class(x) == "numeric"){ 
     # numeric in quotation marks
-    print(x * 10)  
+    return(x * 10)  
   } else{
-    print("Invalid input")
+    return("Invalid input")
   }
 }
 
@@ -110,7 +110,7 @@ ifelse(wife_age > husband_age, "Wife older", ifelse(wife_age < husband_age, "Hus
 ```
 b) recode. Bad one, it is needed to select every possible value. 
 ```{r}
-age_difference <- wife_age - husband_age
+age_difference <- wife_age - husband_age #Better use the function sign to wrap the difference.
 age_difference
 recode(age_difference, "-5" = "Husband older", "-7" = "Husband older", "0" = "Same age", "1" = "Wife older", "4" = "Wife older")
 ```

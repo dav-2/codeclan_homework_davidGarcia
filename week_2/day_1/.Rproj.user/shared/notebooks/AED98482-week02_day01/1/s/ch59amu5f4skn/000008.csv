@@ -1,0 +1,41 @@
+"0","read_csv("
+"0","  ""data/state_income_data.csv"", "
+"0","  col_names = c("
+"0","    ""Index"", "
+"0","    ""State"", "
+"0","    ""Year2002"", "
+"0","    ""Year2003"","
+"0","    ""Year2004"","
+"0","    ""Year2005"","
+"0","    ""Year2006"","
+"0","    ""Year2007"","
+"0","    ""Year2008"","
+"0","    ""Year2009"","
+"0","    ""Year2010"","
+"0","    ""Year2011"","
+"0","    ""Year2012"","
+"0","    ""Year2013"","
+"0","    ""Year2014"","
+"0","    ""Year2015"""
+"0","    )"
+"0",")"
+"2","Parsed with column specification:
+cols(
+  Index = [31mcol_character()[39m,
+  State = [31mcol_character()[39m,
+  Year2002 = [31mcol_character()[39m,
+  Year2003 = [31mcol_character()[39m,
+  Year2004 = [31mcol_character()[39m,
+  Year2005 = [31mcol_character()[39m,
+  Year2006 = [31mcol_character()[39m,
+  Year2007 = [31mcol_character()[39m,
+  Year2008 = [31mcol_character()[39m,
+  Year2009 = [31mcol_character()[39m,
+  Year2010 = [31mcol_character()[39m,
+  Year2011 = [31mcol_character()[39m,
+  Year2012 = [31mcol_character()[39m,
+  Year2013 = [31mcol_character()[39m,
+  Year2014 = [31mcol_character()[39m,
+  Year2015 = [31mcol_character()[39m
+)
+"

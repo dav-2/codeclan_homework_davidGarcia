@@ -1,0 +1,21 @@
+"0","read_csv(""data/state_income_data.csv"")"
+"2","Parsed with column specification:
+cols(
+  Index = [31mcol_character()[39m,
+  State = [31mcol_character()[39m,
+  Y2002 = [32mcol_double()[39m,
+  Y2003 = [32mcol_double()[39m,
+  Y2004 = [32mcol_double()[39m,
+  Y2005 = [32mcol_double()[39m,
+  Y2006 = [32mcol_double()[39m,
+  Y2007 = [32mcol_double()[39m,
+  Y2008 = [32mcol_double()[39m,
+  Y2009 = [32mcol_double()[39m,
+  Y2010 = [32mcol_double()[39m,
+  Y2011 = [32mcol_double()[39m,
+  Y2012 = [32mcol_double()[39m,
+  Y2013 = [32mcol_double()[39m,
+  Y2014 = [32mcol_double()[39m,
+  Y2015 = [32mcol_double()[39m
+)
+"
