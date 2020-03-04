@@ -1,0 +1,209 @@
+---
+title: "Connections homework"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+<div class="blame">
+author: "Del Middlemiss"<br>
+date: "12th June 2019"
+</div>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = 'center')
+```
+
+# MVP
+
+## Local PostgreSQL connections
+
+* Create a local PostgreSQL database called `wrestling`
+
+<br>
+
+* Seed the `wrestling` database from the file `wrestling.sql` using the `psql` PostgreSQL command line interface.
+
+<br>
+
+* Create a connection to the local `wrestling` database from R. 
+    - Don't forget to lock all the keychains you use.
+    - Pass the argument `max.con = 2` to `PostgreSQL()` to make sure you don't have too many simultaneous connections. We'll be setting up a local connection and a remote connection, hence '2'.
+    - Remember to add a separate 'disconnect' block of code. We'll write queries between the 'connect' and 'disconnect' blocks.
+```{r}
+library(keyring)
+keyring_unlock = (keyring = "local")
+username <- key_get(service = "postgresql_username", keyring = "local")
+password <- key_get(service = "postgresql_password", keyring = "local")
+keyring_lock(keyring = "local")
+```
+```{r}
+library(RPostgreSQL)
+keyring_unlock(keyring = "local")
+username <- key_get(service = "postgresql_username", keyring = "local")
+username <- "admin"
+password <- key_get(service = "postgresql_password", keyring = "local")
+keyring_lock(keyring = "local")
+```
+```{r}
+my_db_connection <- dbConnect(drv = PostgreSQL(max.con = 2), user = username, password = password, dbname = 'wrestling', host = 'localhost')
+rm(username, password)
+```
+
+<br>
+
+* Using the `R` connection you just created, write and execute a SQL query to return all the wrestlers in the `wrestlers` table.
+
+```{r}
+dbListTables(conn = my_db_connection)
+```
+```{r}
+dbListFields(conn = my_db_connection, name = "wrestlers")
+```
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT name FROM wrestlers")
+data
+```
+
+
+<br>
+
+* Explore the columns stored in the table. State which data type you think each column stores.
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT * FROM wrestlers")
+data
+```
+id is integer
+born is character
+name is character
+gender is character
+win_percent is double
+total_matches is integer
+
+<br>
+```{r}
+dbDisconnect(conn = my_db_connection)
+```
+
+## Remote PostgreSQL connections
+
+Now we'll try to connect to a remote PostgreSQL database holding the same data. As earlier, this connection may or may not work, depending on how many other connections to the server are currently active. But try a few times, and don't worry if it proves difficult. Being able to write the connection code is what we're looking for here!
+
+Here are the details of the remote PostgreSQL database we wish to connect to:
+
+    username: 'mvhbdgdk'
+    password: 'Ejn5vEqOUfCA1Cxg1rqkh9NY5VbKKAIm'
+    database_name: 'mvhbdgdk'
+    host: 'manny.db.elephantsql.com' or '34.245.37.126' (these are equivalent)
+
+Do the following:
+
+* Store the credentials above in appropriately named keys in the `remote` keyring.
+
+<br>
+```{r}
+keyring_create(keyring = "remote3")
+key_set(service = "wrestling_postgresql_username", keyring = "remote3")
+key_set(service = "wrestling_postgresql_password", keyring = "remote3")
+keyring_lock(keyring = "remote3")
+```
+
+
+* Use your credentials to establish a connection from `R` to the remote database.
+```{r}
+keyring_unlock(keyring = "remote3")
+username <- "admin"
+username <- key_get(service = "wrestling_postgresql_username", keyring = "remote3")
+password <- key_get(service = "wrestling_postgresql_password", keyring = "remote3")
+keyring_lock(keyring = "remote3")
+
+db_connect <- dbConnect(drv = PostgreSQL(max.con = 2), user = username, password = password, dbname='mvhbdgdk', host='34.245.37.126')
+
+rm(username, password)
+```
+
+<br>
+
+* Remember to lock keychains and write appropriate code to close database connections, as before.
+
+<br>
+
+* Using this `R` connection, write and execute a query to return all the wrestlers from the `wrestlers` table
+I am not able to connect: Error in postgresqlNewConnection(drv, ...) : RS-DBI driver: (could not connect casamaster100?@34.245.37.126:5432 on dbname "mvhbdgdk": FATAL: no pg_hba.conf entry for host "94.174.171.19", user "casamaster100?", database "mvhbdgdk", SSL off )
+
+```{r}
+dbDisconnect(conn = db_connect)
+```
+
+<hr>
+
+# Extensions
+
+Return to using your `R` connection to the local `wrestlers` database. Write and run queries to solve the following more difficult problems:
+
+<br>
+
+* Return all the details for any wrestlers from the United Kingdom
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT * FROM wrestlers WHERE born = 'United Kingdom'")
+data
+```
+
+<br>
+
+* Get the names of all Japanese wrestlers who have appeared in 40 or more matches.
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT name FROM wrestlers WHERE born = 'Japan' AND total_matches >= 40")
+data
+```
+
+<br>
+
+* Find the wrestlers who have won between 50% and 60% of their matches.
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT * FROM wrestlers WHERE win_percent BETWEEN '50' AND '60'")
+data
+```
+
+
+<br>
+
+* Find all the wrestlers with names beginning with 'X'.
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT * FROM wrestlers WHERE name LIKE 'X%'")
+data
+```
+
+
+<br>
+
+* Find all the wrestlers who were born in countries beginning with the letter 'I'. Try this using `IN` (there are 9 countries) and using a wildcard comparison. 
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT * FROM wrestlers WHERE born IN ('Italy', 'Ireland', 'India', 'Iran')")
+data
+```
+
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT * FROM wrestlers WHERE born LIKE 'I%'")
+data
+```
+
+<br>
+
+* Find all the wrestlers who were **not** born in countries beginning with the letter 'I'.
+```{r}
+data <- dbGetQuery(conn = my_db_connection, statement = "SELECT * FROM wrestlers WHERE born NOT LIKE 'I%'")
+data
+```
+
+
+
+
+
+

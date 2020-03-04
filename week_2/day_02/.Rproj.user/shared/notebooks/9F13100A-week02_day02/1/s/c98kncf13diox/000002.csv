@@ -1,0 +1,6 @@
+"0","library(RPostgreSQL)"
+"0","keyring_unlock(keyring = ""local"")"
+"0","username <- key_get(service = ""postgresql_username"", keyring = ""local"")"
+"0","username <- ""admin"""
+"0","password <- key_get(service = ""postgresql_password"", keyring = ""local"")"
+"0","keyring_lock(keyring = ""local"")"

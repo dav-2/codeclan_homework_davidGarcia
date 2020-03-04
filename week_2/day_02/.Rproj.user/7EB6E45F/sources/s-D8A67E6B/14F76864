@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1583297619475.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1957045697",
+    "id" : "14F76864",
+    "lastKnownWriteTime" : 1583306042,
+    "last_content_update" : 1583306042383,
+    "path" : "~/de3_classnotes/week_02/day_2/6_homework/week02_day02.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "140,31",
+        "last_setup_crc32" : "D8A67E6Bce7d2e9c",
+        "scrollLine" : "129"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

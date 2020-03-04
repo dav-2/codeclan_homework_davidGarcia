@@ -1,0 +1,2 @@
+"0","data <- dbGetQuery(conn = my_db_connection, statement = ""SELECT * FROM wrestlers WHERE born = 'United Kingdom'"")"
+"0","data"

@@ -1,0 +1,2 @@
+"0","data <- dbGetQuery(conn = my_db_connection, statement = ""SELECT * FROM wrestlers WHERE name LIKE 'X%'"")"
+"0","data"

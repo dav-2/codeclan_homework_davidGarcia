@@ -1,0 +1,1 @@
+{"frames":[{"character_number":0,"end_character_number":0,"end_line_number":0,"file":"","func":"dbDisconnect(conn = db_connect)","line_number":0}],"message":"Error in dbDisconnect(conn = db_connect) : object 'db_connect' not found\n"}

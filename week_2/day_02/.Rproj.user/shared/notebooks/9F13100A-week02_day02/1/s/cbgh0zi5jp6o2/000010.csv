@@ -1,0 +1,11 @@
+"0","keyring_unlock(keyring = ""remote3"")"
+"0","username <- ""admin"""
+"0","username <- key_get(service = ""wrestling_postgresql_username"", keyring = ""remote3"")"
+"0","password <- key_get(service = ""wrestling_postgresql_password"", keyring = ""remote3"")"
+"0","keyring_lock(keyring = ""remote3"")"
+"0",""
+"0","db_connect <- dbConnect(drv = PostgreSQL(max.con = 2), user = username, password = password, dbname='mvhbdgdk', host='34.245.37.126')"
+"2","Error in postgresqlNewConnection(drv, ...) : 
+  RS-DBI driver: (could not connect casamaster100?@34.245.37.126:5432 on dbname ""mvhbdgdk"": FATAL:  no pg_hba.conf entry for host ""94.174.171.19"", user ""casamaster100?"", database ""mvhbdgdk"", SSL off
+)
+"

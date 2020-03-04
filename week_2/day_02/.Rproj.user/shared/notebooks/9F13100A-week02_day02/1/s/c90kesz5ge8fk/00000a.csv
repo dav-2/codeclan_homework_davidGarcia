@@ -1,0 +1,4 @@
+"0","keyring_create(keyring = ""remote3"")"
+"0","key_set(service = ""wrestling_postgresql_username"", keyring = ""remote3"")"
+"0","key_set(service = ""wrestling_postgresql_password"", keyring = ""remote3"")"
+"0","keyring_lock(keyring = ""remote3"")"

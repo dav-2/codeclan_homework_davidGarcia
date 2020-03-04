@@ -1,0 +1,2 @@
+"0","my_db_connection <- dbConnect(drv = PostgreSQL(max.con = 2), user = username, password = password, dbname = 'wrestling', host = 'localhost')"
+"0","rm(username, password)"
