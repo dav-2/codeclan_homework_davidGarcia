@@ -1,0 +1,201 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+MVP
+
+employees --> 5 records. id = primary key, team_id = secondary key
+feedbacks --> 4 records, id = primary key, employee_id = secondary key
+teams --> 3 records. id = primary key
+```{r}
+install.packages("stringr")
+```
+```{r}
+library(stringr)
+```
+
+```{r}
+library(keyring)
+keyring_unlock(keyring = "local")
+username <- key_get(service = "postgresql_username", keyring = "local")
+username <- "admin"
+password <- key_get(service = "postgresql_password", keyring = "local")
+keyring_lock(keyring = "local")
+```
+```{r}
+library(RPostgreSQL)
+keyring_unlock(keyring = "local")
+username <- key_get(service = "postgresql_username", keyring = "local")
+username <- "admin"
+password <- key_get(service = "postgresql_password", keyring = "local")
+keyring_lock(keyring = "local")
+my_db_connection <- dbConnect(drv = PostgreSQL(max.con = 1), user = username, password = password, dbname = 'acme_employees', host = 'localhost')
+rm(username, password)
+```
+```{r}
+employees <- dbGetQuery(conn = my_db_connection, "SELECT * FROM employees")
+View(employees)
+```
+```{r}
+feedbacks <- dbGetQuery(conn = my_db_connection, "SELECT * FROM feedbacks")
+View(feedbacks)
+```
+```{r}
+teams <- dbGetQuery(conn = my_db_connection, "SELECT * FROM teams")
+View(teams)
+```
+```{r}
+employees_details <- data.frame(dbGetQuery(conn = my_db_connection, "SELECT * FROM employees"))
+employees_details
+```
+```{r}
+employees_details[, 6] <- paste(employees_details[, 2], employees_details[, 3])
+colnames(employees_details)[6] <- "full_name"
+employees_details
+```
+```{r}
+colnames(employees_details)[5] <- "team_name"
+employees_details
+```
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT t.name AS team_name, COUNT(e.id) AS num_employees
+FROM employees AS e RIGHT JOIN teams AS t
+ON e.team_id = t.id
+GROUP BY t.name
+ORDER BY num_employees DESC")
+```
+```{r}
+dbGetQuery(conn = my_db_connection, "SELECT * FROM employees
+           WHERE email is NULL OR email NOT LIKE '%@%'")
+```
+
+EXTENSIONS
+2.1
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT e.first_name, e.last_name, f.date
+FROM employees AS e INNER JOIN feedbacks AS f
+ON e.id = f.employee_id
+ORDER BY f.date DESC
+LIMIT 1")
+```
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT t.name, COUNT(t.name)
+FROM employees AS e INNER JOIN teams as t
+ON e.team_id = t.id
+WHERE first_name ILIKE '_'
+GROUP BY t.name")
+```
+Risk Team 1
+
+2.2
+```{r}
+sentiment_df<- dbGetQuery(conn = my_db_connection, 
+"SELECT e.first_name, e.last_name, f.message
+FROM employees AS e INNER JOIN feedbacks AS f
+ON e.id = f.employee_id
+ORDER BY e.id")
+sentiment_df
+View(sentiment_df)
+```
+```{r}
+positive_words <- c("great", "good", "happy", "content", "fulfilled", "fulfilled", "positive", "positives", "cheerful", "nice", "ambition", "ambitions", "ambitious", "friendly", "progress", "joy", "fast", "achieve", "achieving", "achievements", "best", "better",  "unlimited", "pros", "competitive", "opportunity", "advancement", "friendly", "smart", "interesting", "challenging", "grow", "caring", "balance", "helpful")
+```
+```{r}
+negative_words <- c("worse", "worsening", "worst", "slow", "sluggish", "impatient", "unfulfilled", "unfulfilling", "negative", "bad", "limited", "limit", "limitations", "cons", "frustrated", "frustrating", "frustration", "dull", "boring", "politics", "political", "ignore", "ignored", "ignoring", "sad", "depressed", "depressing", "nasty", "stress", "stresses", "stressed", "horrid", "horrible", "terrible", "deadline", "deadlines", "uncaring", "remote")
+```
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT e.first_name, e.last_name, f.message
+FROM employees AS e INNER JOIN feedbacks AS f
+ON e.id = f.employee_id")
+```
+
+```{r}
+for (m in sentiment_df$message){
+  first_m <- m
+  for (itemgsub in c(",", ".", ":", ";", "-", "?", "!", "/",      "\\", "_", "{", "}", "(", ")", "[", "]", "|")){
+    m <- gsub(itemgsub, " ", m, ignore.case = FALSE, fixed =        TRUE)
+  }
+  m <- tolower(m)
+  score <- 0
+  for (good_item in positive_words){
+      n_good_item <- str_count(m, good_item)
+      score = score + n_good_item
+  }
+  for (bad_item in negative_words){
+      n_bad_item <- str_count(m, bad_item)
+      score = score - n_bad_item
+  }
+sentiment_df[which(sentiment_df$message == first_m), 4] <- score
+  }
+colnames(sentiment_df)[4] <- "score"
+sentiment_df
+```
+Best sentiment
+```{r}
+best_person <- sentiment_df[sentiment_df$score == max(sentiment_df$score), c(1, 2, 4)]
+best_person
+```
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT DISTINCT t.name
+FROM employees AS e INNER JOIN teams as t
+ON e.team_id = t.id
+WHERE e.first_name = 'Christyna'")
+```
+For messages in which sentiment_df$score >= 3 
+```{r}
+best_people <- sentiment_df[sentiment_df$score >=3, c(1, 2, 4)]
+best_people
+```
+```{r}
+best_people_names <- best_people[,"first_name"]
+best_people_names <- as.vector(best_people_names)
+best_people_names <- unique(best_people_names)
+best_people_names <- paste(best_people_names, collapse = "', '")
+best_people_names
+```
+
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT DISTINCT t.name
+FROM employees AS e INNER JOIN teams as t
+ON e.team_id = t.id
+WHERE e.first_name IN ('Gayel', 'Linnea', 'Janenna', 'Christyna', 'Westbrook', 'Kari', 'Raimund', 'Brant', 'Jody', 'Cordelie', 'B')")
+```
+Worst sentiment
+```{r}
+worst_person <- sentiment_df[sentiment_df$score == min(sentiment_df$score), c(1, 2, 4)]
+worst_person
+```
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT DISTINCT t.name
+FROM employees AS e INNER JOIN teams as t
+ON e.team_id = t.id
+WHERE e.first_name = 'Jozef'")
+```
+Only one person has the score <= -3, so we can probably use sentiment_df$score <= -2. 
+```{r}
+worst_people <- sentiment_df[sentiment_df$score <=-2, c(1, 2, 4)]
+worst_people
+```
+```{r}
+worst_people_names <- worst_people[,"first_name"]
+worst_people_names <- as.vector(worst_people_names)
+worst_people_names <- unique(worst_people_names)
+worst_people_names <- paste(worst_people_names, collapse = "', '")
+worst_people_names
+```
+
+```{r}
+dbGetQuery(conn = my_db_connection, 
+"SELECT DISTINCT t.name
+FROM employees AS e INNER JOIN teams as t
+ON e.team_id = t.id
+WHERE e.first_name IN('Dorella', 'Linnea', 'Jozef')")
+```
+
