@@ -1,0 +1,130 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+drinks_content <- read_csv("starbucks_drinkMenu_expanded.csv")
+```
+
+
+
+```{r}
+head(drinks_content, 5)
+```
+```{r}
+tail(drinks_content, 5)
+```
+```{r}
+drinks_content
+```
+
+```{r}
+dim(drinks_content)
+```
+
+```{r}
+names(drinks_content)
+```
+
+```{r}
+summarise(drinks_content, mean_calories = mean(Calories), median(Calories), variance_calories = var(Calories))
+```
+```{r}
+hist(drinks_content$Calories)
+```
+```{r}
+boxplot(drinks_content$Calories)
+```
+It is not a normal distribution as the median and mean do not have the same value. They differ by almost 9 calories. The median is smaller than the mean because the distribution has more observations on its left part. It has a small interquartile because most of the observations are between aprox 120 and 260 calories. The range between two standards deviations is from 0 to about 450 calories. It has an outlier with 510 calories. 
+
+
+```{r}
+outlier <- boxplot(drinks_content$Calories, plot = FALSE)$out
+outlier
+```
+```{r}
+view(drinks_content)
+```
+I wouldn't remove the outlier as the distribution has some other values near the outlier. 
+```{r}
+small_table <- drinks_content %>%
+select(Beverage_category, Beverage, Beverage_prep, Calories) %>%
+filter(is.na(TRUE))
+small_table
+view(small_table)
+```
+No NAs. 
+```{r}
+small_table <- drinks_content %>%
+select(Beverage_category, Beverage, Beverage_prep, Calories)
+
+```
+```{r}
+filter(small_table, Beverage_category == "Classic Espresso Drinks")
+```
+```{r}
+drink_calories <-
+  small_table %>%
+  mutate(calorie_diff = 135 - Calories)
+drink_calories
+```
+
+```{r}
+drinks_grouped <- 
+  drinks_content %>%
+  group_by(Beverage_prep)
+```
+```{r}
+drinks_summary <- summarise(drinks_grouped, mean_cal = mean(Calories))
+drinks_summary
+```
+```{r}
+drinks_summary <- arrange(drinks_summary, desc(mean_cal))
+drinks_summary
+```
+```{r}
+drinks_summary <- drinks_content %>%
+  select(Beverage_category, Beverage, Beverage_prep, Calories) %>%
+filter(Beverage_category == "Classic Espresso Drinks") %>%
+mutate(calorie_diff = 135 - Calories) %>%
+group_by(Beverage_prep) %>%
+summarise(mean_cal = mean(Calories)) %>%
+arrange(desc(mean_cal))
+drinks_summary
+```
+
+```{r}
+least_calories <- drink_calories %>% 
+  select(Beverage, Calories) %>%
+  arrange(desc(Calories)) %>%
+  mutate(ranking =(min_rank(Calories))) %>%
+  filter(ranking ==1)
+least_calories
+```
+```{r}
+most_calories <- drink_calories %>% 
+  select(Beverage, Calories) %>%
+  mutate(ranking =(min_rank(Calories))) %>%
+  arrange(desc(Calories)) %>%
+  filter(ranking == 242)
+most_calories
+```
+```{r}
+drinks_grouped
+```
+
+```{r}
+above_average_calories <- drinks_grouped %>% 
+  filter(Calories > mean(Calories))
+above_average_calories
+```
+```{r}
+drinks_distribution <- drinks_grouped %>%
+  select(Beverage, Beverage_prep, Calories) %>%
+  mutate(distribution_score = cume_dist(Calories)) %>%
+  filter(distribution_score > 0.75)
+drinks_distribution
+```
+
