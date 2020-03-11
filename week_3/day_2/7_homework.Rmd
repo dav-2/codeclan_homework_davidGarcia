@@ -1,0 +1,235 @@
+---
+title: "Homework"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = 'center')
+library(tidyverse)
+```
+
+
+
+# Learning Objectives
+
+* Clean up a dataset with common errors, outliers and missing values
+* Do some summary stats
+
+# Introduction: World Bank Data. 
+
+The dataset we will use for this homework is part of the World Bank Data project. Specifically, we are using the "Women in Parliament" dataset, which includes the percentage of women in parliament (“single or lower parliamentary chambers only”) by country (region) and year. [Full details can be found here](https://data.worldbank.org/indicator/SG.GEN.PARL.ZS). 
+
+We have already download the data and saved it as a .csv file called `women_in_gov` for you. This particular dataset contains everything we have covered today: metadata in the file, character and numeric variables, untidy data, and missing values. 
+
+
+# MVP Task 
+
+<br>
+
+# Question 1 
+Load in the `women_in_gov` csv file. Make sure you remove all metadata from the top. 
+```{r}
+women_in_gov <- read_csv("data/women_in_gov.csv", skip = 3)
+women_in_gov
+```
+
+***
+
+# Question 2
+Some of the column names contain spaces and numbers. Fix the column names. 
+
+```{r}
+library(janitor)
+```
+```{r}
+women_in_gov <- clean_names(women_in_gov)
+women_in_gov
+```
+```{r}
+women_in_gov <- women_in_gov %>% 
+  mutate_if(is_logical, as.double)
+women_in_gov
+```
+
+***
+
+
+# Question 3
+We have some columns in the data that don't really need to  be there. Confirm that the `X64`, `Indicator.Name` and `Indicator.Code` have the same values for all observations. If they do, remove those columns. 
+```{r}
+women_in_gov %>% 
+  group_by(indicator_name) %>% 
+  summarise(count = n())
+```
+```{r}
+women_in_gov %>% 
+  group_by(x64) %>% 
+  summarise(count = n())
+```
+```{r}
+women_in_gov %>% 
+  group_by(indicator_code) %>% 
+  summarise(count = n())
+```
+```{r}
+women_in_gov <- women_in_gov %>% 
+  select(-indicator_name, -indicator_code, -x64)
+```
+```{r}
+women_in_gov
+view(women_in_gov)
+```
+
+
+***
+
+
+# Question 4
+Think back to last week where we talked about wide vs long format. As the data is in wide format, it's pretty clear to see we have a lot of missing values. Reshape the data from wide to long format, so that for each country the year column becomes a row. 
+```{r}
+women_in_gov <- pivot_longer(women_in_gov, cols = starts_with("x"), names_to = "year", values_to = "prop_women")
+women_in_gov
+```
+
+
+</details>
+<br>
+
+***
+
+# Question 5
+You'll notice your `prop_women` column contains missing values. Let's do a few things. First, let's count how many missing values you have. Then check how many different missing values you have (e.g. how many unique ones do you have). Then decide how you will deal with them. Will you insert average imputation values, most common imputation values, or use the multiple imputation method? Explain your decision. Then fix the missing values.   
+```{r}
+women_in_gov %>% 
+  summarise(count = sum(is.na(prop_women)))
+```
+```{r}
+prop_women_missing_values <- women_in_gov %>% 
+  filter(is.na(prop_women))
+view(prop_women_missing_values)
+```
+
+```{r}
+prop_women_missing_values <- women_in_gov %>% 
+  filter(is.na(prop_women)) %>% 
+  filter(unique)
+```
+The values from 1960 to 1989 are all missing, and also from 1991 to 1996. We also have all the values missing for some of the least democratic countries. I guess the missing values in these countries are non at random missing values, as probably they don't have women in govern and that is the cause of the missing values. The same was probably true for the first part of the period between 1960 annd 1989 for many of the countries. As we can see there are values considerably big in 1990, the missing values after 1990 and also some years before are probably just missing at random or missing completely at random values. 
+I wouldn't insert average or most common imputation values as the average would be an excesive high value for those years (there is an upwards tendency accross the table). I would use the multiple imputation method or regression sustitution. As I don't know yet how to use any of those methods I am going to drop the values. I think droping the values is better than inputing an average or most common value as that could bias the sample.
+
+```{r}
+women_in_gov <- women_in_gov %>% 
+  drop_na()
+women_in_gov
+```
+
+***
+
+# Question 6
+Create a boxplot to see if there are any outliers in the proportion of women.
+```{r}
+ggplot(women_in_gov, aes(x = "women_in_gov", y = prop_women)) +
+    geom_boxplot()
+```
+There are many outliers, probably corresponding to the countries with more women in the government. 
+
+***
+
+# Question 7
+Use the `outliers` package to calculate a zscore for each observation in your data. Mark any of the values in the `prop_women` column that are more or less than 3 standard deviations above or below the mean as outliers. Add this outlier flag as a new column within the dataset. Create a table that only contains the outliers and have a look at them. 
+```{r}
+library(outliers)
+```
+```{r}
+prop_zscores <- scores(women_in_gov$prop_women)
+is_outlier <- prop_zscores > 3 | prop_zscores < -3
+women_in_gov <- women_in_gov %>%
+  mutate(is_outlier = is_outlier)
+women_in_gov
+```
+```{r}
+prop_outliers <- women_in_gov %>%
+  filter(is_outlier == TRUE)
+prop_outliers
+```
+I would say most of the outliers correspond to high developed or leftist countries. Rwanda's outliers are probably an error or purposely missleading information. 
+
+***
+
+# Question 8 
+Next decide - what will you do with these outliers? Create a table with your newly dealt with outliers. 
+
+Droping or inputing the outliers would be a mistake, as most of them are meaningful. I would analyse them separately. We could probably drop Rwanda from the outliers. 
+```{r}
+prop_outliers
+```
+```{r}
+ggplot(women_in_gov, aes("women_in_gov", prop_women)) +
+    geom_boxplot() +
+    coord_flip() +
+    facet_wrap(~is_outlier)
+```
+```{r}
+ggplot(prop_outliers, aes(country_name, prop_women)) +
+    geom_boxplot() +  coord_flip()
+```
+We could analyse if Rwanda is an outlier among the outliers and probably drop it. 
+
+***
+
+# Question 9 
+Now you have your clean dataset, let's do some summarising. Find the top 10 countries with the highest mean proportion of women in government across all the years. Then find the bottom 10.
+```{r}
+women_in_gov
+```
+
+```{r}
+women_in_gov %>% 
+  group_by(country_name) %>% 
+  summarise(avg_women = mean(prop_women)) %>% 
+  arrange(desc(avg_women)) %>% 
+  head(10)
+```
+```{r}
+women_in_gov %>% 
+  group_by(country_name) %>% 
+  summarise(avg_women = mean(prop_women)) %>% 
+  arrange(avg_women) %>% 
+  head(10)
+```
+
+***
+
+# Question 10 
+
+Pick another interesting analysis question of your choosing. Tell us WHY you think it is interesting, how you did it, and what it tells us.
+
+It could be interesting to analyse the general trend of the proportion of women in the governments. It is interesting because we will be able to see if there is an upwards or downwards trend or if the proportion remained without changes. 
+
+<br>
+
+# Extension task
+
+There is another dataset available from the Brazil House of Deputies that we haven't analysed. This is the `deputies_info.csv` file. 
+
+Complete the following task: 
+
+We will be looking for outliers and relationships between the `receipt_description` variable and the `receipt_value` variable. 
+Load in the data. Check the variable names, and check for missing values in the variable of interest `receipt_value`.  
+Spend some time visualizing any outliers in the `receipt_value` column. Does it have a relationship with the `receipt_description` column?  
+Identify which rows in the `receipt_value` column of data_v1 dataset are outliers. Try plotting them or looking through just the outliers.   
+Calculate the outlier zcores for the `receipt_value` column. Replot the data, and then decide what you want to do with the outliers. 
+Finally, which parties have the highest dodgy claims? What do they claim the most on?
+
+
+
+
+
