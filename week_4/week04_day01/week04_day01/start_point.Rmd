@@ -1,0 +1,80 @@
+---
+title: "Start Point"
+author: "Me"
+date: "17/03/2020"
+output: 
+  html_document:
+    css: styles.css
+---
+```{r, include = FALSE}
+library(tidyverse)
+library(CodeClanData)
+beer_table <- CodeClanData::beer %>% 
+  head()
+beer_table
+write.csv(beer_table, "beer_table.csv")
+```
+```{r, include = FALSE}
+backpack_table <- CodeClanData::backpack %>% 
+  head() %>% 
+  select("backpack_weight", "body_weight", "ratio", "back_problems")
+backpack_table
+write.csv(backpack_table, "backpack_table.csv")
+```
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center")
+```
+
+<h1 class="bold-text">Abstract</h1>
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Amet purus gravida quis blandit turpis cursus. Mauris nunc congue nisi vitae. Est ullamcorper eget nulla facilisi etiam. Velit euismod in pellentesque massa placerat duis ultricies. Ut tortor pretium viverra suspendisse potenti nullam ac. Quam id leo in vitae turpis massa sed elementum tempus. Placerat orci nulla pellentesque dignissim enim. Felis eget nunc lobortis mattis aliquam faucibus. Mi proin sed libero enim. Leo vel orci porta non pulvinar neque laoreet suspendisse. Morbi non arcu risus quis varius. Senectus et netus et malesuada fames ac turpis egestas integer. Velit egestas dui id ornare arcu odio ut sem nulla. Libero justo laoreet sit amet cursus sit amet dictum sit. Lectus proin nibh nisl condimentum id venenatis. Maecenas volutpat blandit aliquam etiam erat.
+
+<h1 class="bold-text">Introduction</h1>
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Mi quis hendrerit dolor magna eget est lorem ipsum. Arcu non sodales neque sodales ut etiam sit amet nisl. Orci eu lobortis elementum nibh tellus molestie nunc non blandit. Eget magna fermentum iaculis eu non diam phasellus vestibulum lorem. Mauris augue neque gravida in fermentum. Risus nullam eget felis eget nunc lobortis mattis aliquam faucibus. Imperdiet proin fermentum leo vel orci porta non. Ultrices dui sapien eget mi proin sed libero. Eu turpis egestas pretium aenean pharetra magna ac placerat. Posuere lorem ipsum dolor sit amet consectetur adipiscing. Neque sodales ut etiam sit amet nisl. Mattis aliquam faucibus purus in massa tempor nec. Elit scelerisque mauris pellentesque pulvinar pellentesque habitant. Aliquam ultrices sagittis orci a scelerisque purus semper eget. Facilisis mauris sit amet massa vitae tortor. Lectus arcu bibendum at varius vel pharetra vel turpis.
+
+<h1 class="bold-text">Aim</h1>
+
+<p class = "underlined-text">I want to find out about some things</p>
+
+<h1 class="bold-text">Data</h1>
+
+[Link to the CodeClanData repo](https://github.com/codeclan/CodeClanData)
+
+<h1 class="bold-text">Results</h1>
+
+|   | brand                                | brewer                         | percent | calories | carbohydrates |
+|---|--------------------------------------|--------------------------------|---------|----------|---------------|
+| 1 | Beamish Irish Cream Stout            | Beamish - Crawford (Ireland)   | 5       | 146      | 10            |
+| 2 | Beck's Beer                          | Brauerei Beck (Germany)        | 2.3     | 143      | 3.9           |
+| 3 | Beck's Light                         | Brauerei Beck (Germany)        | 4.8     | 64       | 11            |
+| 4 | Dragon Stout                         | Desnoes - Goeddes (Jamaica)    | 5.1     | 220      | 11            |
+| 5 | Greenall's Cheshire English Pub Beer | Greenall Whitley PLC (England) | 5       | 142      | 9.5           |
+| 6 | Guiness Draught - Bottle             | Guinness (Ireland)             | 4.27    | 126      | 17.4          |  
+
+|   | backpack_weight | body_weight | ratio     | back_problems |
+|---|-----------------|-------------|-----------|---------------|
+| 1 | 9               | 125         | 0.072     | 1             |
+| 2 | 8               | 195         | 0.0410256 | 0             |
+| 3 | 10              | 120         | 0.0833333 | 1             |
+| 4 | 6               | 155         | 0.0387097 | 0             |
+| 5 | 8               | 180         | 0.0444444 | 0             |
+| 6 | 5               | 240         | 0.0208333 | 0             |
+
+
+<h1 class="bold-text">Conclusions</h1>
+
+* Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Montes nascetur ridiculus mus mauris vitae. Nunc vel risus commodo viverra. A arcu cursus vitae congue mauris rhoncus. Ut etiam sit amet nisl purus in. At varius vel pharetra vel turpis nunc eget lorem. Diam maecenas sed enim ut sem. Elementum integer enim neque volutpat ac tincidunt vitae. Consequat mauris nunc congue nisi vitae suscipit tellus mauris. Sit amet nisl purus in mollis nunc sed. Sed risus pretium quam vulputate dignissim suspendisse in. Egestas congue quisque egestas diam in arcu cursus euismod. Egestas congue quisque egestas diam in arcu cursus euismod. A pellentesque sit amet porttitor. Nunc consequat interdum varius sit amet mattis. Et netus et malesuada fames ac turpis egestas.
+
+* Imperdiet nulla malesuada pellentesque elit eget gravida. Erat nam at lectus urna. Pellentesque elit ullamcorper dignissim cras tincidunt lobortis feugiat vivamus at. Massa massa ultricies mi quis hendrerit. Habitasse platea dictumst quisque sagittis purus. Dui nunc mattis enim ut. Bibendum ut tristique et egestas quis ipsum. Phasellus vestibulum lorem sed risus ultricies. Phasellus faucibus scelerisque eleifend donec pretium. Turpis massa sed elementum tempus egestas sed.
+
+* Ut consequat semper viverra nam libero justo laoreet. Scelerisque mauris pellentesque pulvinar pellentesque habitant morbi tristique. Mauris a diam maecenas sed enim ut sem. Quisque non tellus orci ac auctor augue mauris. Id cursus metus aliquam eleifend mi in nulla. Tellus orci ac auctor augue mauris augue neque. Diam maecenas sed enim ut sem viverra. Turpis egestas sed tempus urna. Pharetra vel turpis nunc eget lorem dolor sed viverra. Et pharetra pharetra massa massa ultricies mi. At quis risus sed vulputate odio ut enim blandit volutpat. Phasellus faucibus scelerisque eleifend donec. Lacus luctus accumsan tortor posuere ac ut consequat. Quis auctor elit sed vulputate mi sit amet mauris. Tortor vitae purus faucibus ornare suspendisse sed nisi lacus.
+
+<h1 class="bold-text">References</h1>
+
+* [reference 1](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference)
+* [reference 2](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference)
+* [reference 3](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference)
+* [reference 4](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference)
+
+
