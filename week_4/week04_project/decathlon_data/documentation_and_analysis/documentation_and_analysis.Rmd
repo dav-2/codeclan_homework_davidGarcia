@@ -1,0 +1,77 @@
+---
+title: "Decathlon Data"
+output: html_notebook
+---
+```{r, include = FALSE}
+library(tidyverse)
+library(here)
+```
+
+```{r, include = FALSE}
+decathlon_clean_data <- read_csv(here("clean_data/decathlon_clean_data.csv"))
+decathlon_clean_data
+```
+
+<br /><br />
+
+**Who had the longest long jump seen in the data?**
+```{r}
+decathlon_clean_data %>% 
+  filter(discipline == "long_jump") %>% 
+  filter(score == max(score))
+```
+
+<br /><br />
+
+**What was the average 100m time in each competition?**
+```{r}
+decathlon_clean_data %>% 
+  filter(discipline == "x100m", 
+         competition == "decastar") %>% 
+  summarise(average_x100m_decastar = mean(score))
+```
+```{r}
+decathlon_clean_data %>% 
+  filter(discipline == "x100m", 
+         competition == "olympicg") %>% 
+  summarise(average_x100m_olympicg = mean(score))
+```
+
+<br /><br />
+**Who had the highest total points across both competitions?**
+```{r}
+decathlon_clean_data %>% 
+  group_by(name) %>% 
+  summarise(sum_points = sum(points)/10) %>% 
+  filter(sum_points == max(sum_points))
+```
+
+<br /><br />
+**What was the shot-put scores for the top three competitors in each competition?**
+```{r}
+decathlon_clean_data %>% 
+  filter(competition == "decastar", rank <= 3) %>% 
+  group_by(name, competition) %>% 
+  filter(discipline == "shot_put") %>% 
+  summarise(score)
+```
+```{r}
+decathlon_clean_data %>% 
+  filter(competition == "olympicg", rank <= 3) %>% 
+  group_by(name, competition) %>% 
+  filter(discipline == "shot_put") %>% 
+  summarise(score)
+```
+
+<br /><br />
+**What was the average points for competitors who ran the 400m in less than 50 seconds vs. those than ran 400m in more than 50 seconds?**
+```{r}
+decathlon_clean_data %>% 
+  filter(discipline == "x400m", score < 50) %>% 
+  summarise(avg_points_less_50 = mean(points))
+```
+```{r}
+decathlon_clean_data %>% 
+  filter(discipline == "x400m", score > 50) %>% 
+  summarise(avg_points_greater_50 = mean(points))
+```

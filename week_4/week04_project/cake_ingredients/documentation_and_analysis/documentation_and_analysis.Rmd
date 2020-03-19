@@ -1,0 +1,59 @@
+---
+title: "Cake Ingredients"
+output: html_notebook
+---
+```{r,  include = FALSE}
+library(tidyverse)
+library(here)
+```
+
+```{r, include = FALSE}
+cake_clean_data_1961 <- read_csv(here("clean_data/cake_clean_data_1961.csv"))
+cake_clean_data_1961
+```
+<br /><br />
+**Which cake has the most cocoa in it?**
+```{r}
+cake_clean_data_1961 %>% 
+  filter(ingredient == "cocoa", amount == max(amount)) %>% 
+  select(cake, amount)
+```
+<br /><br />
+**For sponge cake, how many cups of ingredients are used in total?**
+```{r}
+cake_clean_data_1961 %>% 
+  filter(cake == "sponge", measure == "cup") %>% 
+  summarise(total_cups = sum(amount))
+```
+
+<br /><br />
+**How many ingredients are measured in teaspoons?**
+```{r}
+cake_clean_data_1961 %>% 
+  filter(measure == "teaspoon") %>% 
+  group_by(ingredient) %>%
+  summarise() %>% 
+  tally(name = "ingredients_measured_in_teaspoons")
+```
+
+<br /><br />
+**Which cake has the most unique ingredients?**
+```{r}
+times_used_ingredients <- cake_clean_data_1961 %>% 
+  group_by(ingredient) %>% 
+  summarise(times_used = n())
+left_join(cake_clean_data_1961, times_used_ingredients, "ingredient") %>% 
+  group_by(cake) %>% 
+  summarise(sum_times_used = sum(times_used)) %>% 
+  filter(sum_times_used == min(sum_times_used))
+  
+```
+
+<br /><br />
+**Which ingredients are used only once?**
+```{r}
+cake_clean_data_1961 %>% 
+  group_by(ingredient) %>% 
+  summarise(times_used = n()) %>% 
+  filter(times_used == 1)
+```
