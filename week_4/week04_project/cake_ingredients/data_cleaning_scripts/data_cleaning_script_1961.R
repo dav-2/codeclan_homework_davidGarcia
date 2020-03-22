@@ -8,7 +8,7 @@ library(outliers)
 # data reading ------------------------------------------------------------
 
 cake_raw_data_1961 <- read_csv("raw_data/cake-ingredients-1961.csv")
-
+cake_raw_data_1961_presentation <- cake_raw_data_1961
 
 # data cleaning -----------------------------------------------------------
 

@@ -1,0 +1,11 @@
+body{
+  color: black;
+  background-color: #ADD8E6;
+}
+.underlined-text{
+  text-decoration: underline;
+}
+.index{
+  font-weight: bold;
+  font-size: 18px;
+}

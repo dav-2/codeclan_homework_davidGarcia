@@ -1,0 +1,181 @@
+---
+title: "Cake ingredients"
+date: "20/03/2020"
+output: 
+  html_document:
+    css: style.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r,  include = FALSE}
+library(tidyverse)
+library(here)
+```
+<div class = "index">
+  <ul> 
+    <li>Creating the project and folders according to the structure:</li>
+      <ul>
+        <li>raw_data</li>
+        <li>data_cleaning_scripts</li>
+        <li>clean_data</li>
+        <li>documentation_and_analyisis</li>
+      </ul>
+    <li>Coping the raw data into the folder raw_data. This data comes in two files:</li>
+      <ul>
+        <li>cake-ingredients-1961.csv.</li>
+        <li>cake_ingredient_code.csv.</li>
+      </ul>  
+    <li>Creating two R Scripts inside data_cleaning scripts.</li>
+      <ul>
+        <li>First script to clean the data cake_ingredient_code.csv.</li>
+        <li>Second script to clean the data cake-ingredients-1961.csv.</li>
+        They inherit their names from the files containing the data they are cleaning, but both with underscores.
+      </ul>
+    <li>Following this structure in data_cleaning_script_code.R:</li>
+  </ul>
+</div>
+
+##### packages and libraries --------------------------------------------------
+
+install.packages("snakecase") <br /><br />
+library(tidyverse) <br /><br />
+library(janitor) <br /><br />
+library(snakecase)
+
+
+##### data reading ------------------------------------------------------------
+
+cake_raw_data_code <- read_csv("raw_data/cake_ingredient_code.csv")
+
+```{r}
+cake_raw_data_code_presentation <- read_csv(here("raw_data/cake_ingredient_code.csv"))
+cake_raw_data_code_presentation
+```
+
+
+##### data cleaning -----------------------------------------------------------
+
+cake_raw_data_code <- cake_raw_data_code %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; mutate(ingredient = str_to_lower(ingredient)) %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; mutate(code = str_to_lower(code)) %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; mutate(ingredient = str_replace_all(ingredient, "\\s", "_")) %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; mutate(ingredient = str_replace(ingredient, "_cup", "") ) %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; mutate(measure = ifelse(is.na(measure) == T, "cup", measure))
+
+<br /><br /><br /><br />
+<div class = "index">
+<li>Following this structure in data_cleaning_script_1961:</li>
+</div>
+<br /><br />
+
+##### packages and libraries --------------------------------------------------
+
+library(tidyverse) <br /><br />
+ibrary(janitor) <br /><br />
+library(outliers)
+
+
+##### data reading ------------------------------------------------------------
+
+cake_raw_data_1961 <- read_csv("raw_data/cake-ingredients-1961.csv")
+
+```{r}
+cake_raw_data_1961_presentation <- read_csv(here("raw_data/cake-ingredients-1961.csv"))
+cake_raw_data_1961_presentation
+```
+
+
+##### data cleaning -----------------------------------------------------------
+
+cake_raw_data_1961 <- cake_raw_data_1961 %>% <br /><br />
+  &nbsp;&nbsp;&nbsp;clean_names() %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; mutate(cake = str_to_lower(cake)) %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; mutate(cake = str_replace_all(cake, "\\s", "_")) %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; pivot_longer(-cake, <br /><br />
+               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; names_to = "code", <br /><br />
+               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; values_to = "amount") 
+
+cake_raw_data_1961 <- 
+  &nbsp;&nbsp;&nbsp; left_join(cake_raw_data_1961, cake_raw_data_code, "code") %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; select(-code) %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; drop_na() %>% <br /><br />
+  &nbsp;&nbsp;&nbsp; select(1, ingredient,measure, amount)
+  
+<br /><br />
+I am pretty sure that the NAs correspond to ingredients with amount == 0.
+We can't imput values to them as that would add new ingredients to the cakes. 
+The best option is to drop them. <br /><br />
+If we set -3 < zscores to < 3 we have three outliers in amounts.
+But they are proportional to the other amounts, so we must keep them.
+
+```{r}
+cake_clean_data_1961 <- read_csv(here("clean_data/cake_clean_data_1961.csv"))
+cake_clean_data_1961
+```
+
+##### data writing ------------------------------------------------------------
+
+write_csv(cake_clean_data_1961, "clean_data/cake_clean_data_1961.csv")
+
+<div class = "index">
+<br /><br />
+<li>Reading the csv into the analysis file and answer the questions.</li>
+</div>
+<br /><br />
+<br /><br />
+
+```{r, include}
+cake_clean_data_1961 <- read_csv(here("clean_data/cake_clean_data_1961.csv"))
+cake_clean_data_1961
+```
+<br /><br />
+
+**Which cake has the most cocoa in it?**
+```{r}
+cake_clean_data_1961 %>% 
+  filter(ingredient == "cocoa", amount == max(amount)) %>% 
+  select(cake, amount)
+```
+<br /><br />
+
+**For sponge cake, how many cups of ingredients are used in total?**
+```{r}
+cake_clean_data_1961 %>% 
+  filter(cake == "sponge", measure == "cup") %>% 
+  summarise(total_cups = sum(amount))
+```
+<br /><br />
+
+**How many ingredients are measured in teaspoons?**
+```{r}
+cake_clean_data_1961 %>% 
+  filter(measure == "teaspoon") %>% 
+  group_by(ingredient) %>%
+  summarise() %>% 
+  tally(name = "ingredients_measured_in_teaspoons")
+```
+<br /><br />
+
+**Which cake has the most unique ingredients?**
+```{r}
+times_used_ingredients <- cake_clean_data_1961 %>% 
+  group_by(ingredient) %>% 
+  summarise(times_used = n())
+left_join(cake_clean_data_1961, times_used_ingredients, "ingredient") %>% 
+  group_by(cake) %>% 
+  summarise(sum_times_used = sum(times_used)) %>% 
+  filter(sum_times_used == min(sum_times_used))
+```
+<br /><br />
+
+**Which ingredients are used only once?**
+```{r}
+cake_clean_data_1961 %>% 
+  group_by(ingredient) %>% 
+  summarise(times_used = n()) %>% 
+  filter(times_used == 1)
+```

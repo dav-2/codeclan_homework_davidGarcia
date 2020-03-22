@@ -9,7 +9,7 @@ library(snakecase)
 # data reading ------------------------------------------------------------
 
 cake_raw_data_code <- read_csv("raw_data/cake_ingredient_code.csv")
-
+cake_raw_data_code_presentation <- cake_raw_data_code
 
 # data cleaning -----------------------------------------------------------
 

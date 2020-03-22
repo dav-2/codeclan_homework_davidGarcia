@@ -46,7 +46,6 @@ left_join(cake_clean_data_1961, times_used_ingredients, "ingredient") %>%
   group_by(cake) %>% 
   summarise(sum_times_used = sum(times_used)) %>% 
   filter(sum_times_used == min(sum_times_used))
-  
 ```
 
 <br /><br />
