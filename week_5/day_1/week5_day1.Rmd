@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(CodeClanData)
+```
+```{r}
+backpack
+```
+```{r}
+names(backpack)
+dim(backpack)
+```
+
+```{r}
+ggplot(backpack) +
+  geom_bar(aes(x = backpack_weight))+
+  labs(
+    title = "Distribution of backpack_weights carried by students"
+  )
+```
+It is a distribution skewed to the right. Most of the students carry weights around 11kg, being 11kg the median and 11.66 the mean. Some students carry much bigger weights, with an outlier carrying 35kg. 
+
+```{r}
+median(backpack$backpack_weight)
+mean(backpack$backpack_weight)
+```
+```{r}
+ggplot(backpack) +
+  geom_bar(aes(x = backpack_weight, fill = sex))+
+  facet_wrap(~ sex, ncol = 2)+
+  labs(
+    title = "Distribution of backpack_weights carried by students, separated by sex"
+  )
+```
+There aren't  big differences between sexs. 
+
+```{r}
+backpack_count <- backpack %>% 
+  group_by(body_weight) %>% 
+  summarise(count = n())
+backpack_total <- inner_join(backpack, backpack_count, "body_weight")
+```
+
+```{r}
+ggplot(backpack_total) +
+  geom_col(aes(x = body_weight, y = backpack_weight))+
+  labs(
+    title = "Relationship between body_weight and backpack_weight"
+  )
+```
+```{r}
+backpack_labels <- backpack %>% 
+  mutate(back_problems = ifelse(back_problems == 1, "pain", "no pain"))
+```
+
+```{r}
+ggplot(backpack_labels) +
+  geom_bar(aes(x = back_problems))+
+  labs(
+    title = "Proportion of students who reported back_problems"
+  )
+```
+The proportion of students who reported back_problems is aprox a 32%. 
+
+```{r}
+ggplot(backpack_labels) +
+  geom_bar(aes(x = back_problems))+
+  labs(
+    title = "Proportions of female and male students who reported back_problems"
+  )+
+  facet_wrap(~ sex, 2)
+```
+It is different. Around a 48% of women reported back problems, while only around a 16% of men reported them. 
