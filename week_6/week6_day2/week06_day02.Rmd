@@ -1,0 +1,95 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(janitor)
+library(skimr)
+```
+
+```{r}
+phone_reviews <- read_csv("data/20190928-items.csv")
+```
+
+```{r}
+clean_names(phone_reviews)
+```
+```{r}
+phone_reviews %>% 
+  select(brand, asin) %>% 
+  group_by(brand) %>% 
+  summarise(number_phones_per_brand = n()) %>% 
+  filter(number_phones_per_brand == max(number_phones_per_brand))
+```
+```{r}
+samsung <- phone_reviews %>% 
+  filter(brand == "Samsung")
+```
+
+```{r}
+samsung_ratings <- samsung %>% 
+  tabyl(rating)
+```
+```{r}
+samsung_ratings %>% 
+  summarise(mean(rating))
+```
+```{r}
+samsung_ratings %>% 
+  summarise(sd(rating))
+```
+```{r}
+samsung_ratings %>% 
+  skim(rating)
+```
+
+```{r}
+norm_dist <- tibble(
+  x =  seq(1, 5, 0.1),
+  f_x = dnorm(x = x, mean = 3.4821, sd = 0.9630405)
+)
+  
+samsung_ratings %>%
+  ggplot(aes(x = rating, y = percent)) +
+  geom_col()+
+    stat_function(
+    fun = dnorm, 
+    args = list(
+      mean = 3.48, 
+      sd = 0.9630405
+    ),
+    col = "red"
+  )
+```
+The normal distribution does not provide a good model of this ratings. Our distribution is much more platykurtic and has outliers for rating = 1, 2 and 5. This outliers modify the value of the mean, skewing our distribution. 
+
+```{r}
+pnorm(q = 1) - pnorm(q = -1)
+```
+
+```{r}
+samsung_ratings %>%
+  filter(rating >= 3.48 - 0.963) %>%
+  filter(rating <= 3.48 + 0.963) %>%
+  summarise(prop_within_1sd = n() / nrow(samsung_ratings))
+```
+```{r}
+pnorm(q = 2) - pnorm(q = -2)
+```
+```{r}
+samsung_ratings %>%
+  filter(rating >= 3.48 - 2*0.963) %>%
+  filter(rating <= 3.48 + 2*0.963) %>%
+  summarise(prop_within_2sd = n() / nrow(samsung_ratings))
+```
+```{r}
+pnorm(q = 3) - pnorm(q = -3)
+```
+```{r}
+samsung_ratings %>%
+  filter(rating >= 3.48 - 3*0.963) %>%
+  filter(rating <= 3.48 + 3*0.963) %>%
+  summarise(prop_within_3sd = n() / nrow(samsung_ratings))
+```
+According to these results, it is almost a normal distribution, only a bit more platykurtic. I think I have plotted it wrong. 
