@@ -1,0 +1,270 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+MVP
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(e1071)
+library(infer)
+```
+
+```{r}
+ames <- read_csv("data/ames.csv")
+```
+```{r}
+ames <- clean_names(ames)
+```
+
+```{r}
+glimpse(ames)
+```
+```{r}
+ames %>% 
+  ggplot(aes(x = lot_area)) + 
+  geom_histogram(aes(y = ..density..), col = "white") +
+  labs(x = "lot area")+
+  stat_function(
+    fun = dnorm, 
+    args = list(
+      mean = mean(ames$lot_area), 
+      sd = sd(ames$lot_area)
+    ),
+    col = "red"
+  )
+```
+It doesn't seem to be a normal distribution. It appears to be right skewed and too centralised.  
+```{r}
+ames %>%
+  ggplot(aes(x = lot_area)) +
+  geom_boxplot()
+```
+It is right skewed and quite centralised. The ICR is small compared with how dispersed the outliers are. 
+```{r}
+qqnorm(ames$lot_area)
+qqline(ames$lot_area)
+```
+It is normal until 1.8 standards deviations, but as a whole is right skewed, probably heavily right skewed. 
+```{r}
+ames %>%
+  summarise(skewness = skewness(lot_area, type = 1))
+```
+It is heavily right skewed. 
+
+```{r}
+ames_stats <- ames %>%
+  summarise(
+    mean = mean(lot_area),
+    median = median(lot_area),
+    sd = sd(lot_area)
+  )
+```
+
+```{r}
+ames %>%
+  filter(lot_area >= ames_stats$mean - ames_stats$sd) %>%
+  filter(lot_area <= ames_stats$mean + ames_stats$sd) %>%
+  summarise(prop_within_1sd = n() / nrow(ames))
+```
+```{r}
+ames %>%
+  filter(lot_area >= ames_stats$mean - 2 * ames_stats$sd) %>%
+  filter(lot_area <= ames_stats$mean + 2 * ames_stats$sd) %>%
+  summarise(prop_within_2sd = n() / nrow(ames))
+```
+```{r}
+ames %>%
+  filter(lot_area >= ames_stats$mean - 3 * ames_stats$sd) %>%
+  filter(lot_area <= ames_stats$mean + 3 * ames_stats$sd) %>%
+  summarise(prop_within_3sd = n() / nrow(ames))
+```
+
+```{r}
+ames %>%
+  filter(lot_area <= ames_stats$mean + 3 * ames_stats$sd) %>%
+  summarise(prop_bigger_3sd_right_side = n() / nrow(ames))
+```
+
+For a normal distribution, expect 68% of values to fall within one standard deviation of the mean. Here, 93.5% of ratings are within this range, so our distribution is too central.
+
+Adding another standard deviation to either side should increase the proportion of values by 27% to 95% overall in a normal distribution. Our distribution adds 5%, going to 98.5% overall, so there are too few values in the range from one to two standard deviations.
+
+Finally, in a normal distribution, adding a further standard deviation to either side should increase the proportion of values by 4.7% to 99.7% overall. Our distribution adds 0.5% to 99%. Too few values between 2 and three standards deviations, and too many from 3 standard deviations onwards. As it is possible to see "from prop_bigger_3sd_right_side", those values which fall from 3sd onwards are only on the right side, as prop_bigger_3sd_right_side = prop_within_3sd.
+
+```{r}
+bootstrap_rep_sample <- ames %>%
+  specify(response = lot_area) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+```{r}
+bootstrap_lot_area_ci_95 <- bootstrap_rep_sample %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+bootstrap_lot_area_ci
+```
+```{r}
+bootstrap_rep_sample %>%
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = bootstrap_lot_area_ci_95)
+```
+
+
+```{r}
+bootstrap_lot_area_ci_99 <- bootstrap_rep_sample %>%
+  get_confidence_interval(level = 0.99, type = "percentile")
+bootstrap_lot_area_ci
+```
+```{r}
+bootstrap_rep_sample %>%
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = bootstrap_lot_area_ci_99)
+```
+It is broader as it's needed a broader interval to have a bigger percentage of confidence that the mean for lot_area in the population is going to fall in that interval.
+
+```{r}
+bootstrap_rep_sample %>%
+  summarise("point_estimate_mean(lot_area)" = mean(stat))
+```
+
+EXTENSION
+
+```{r}
+ames <- ames %>% 
+mutate(before_1920 = as.numeric(year_built < 1920))
+```
+
+```{r}
+bootstrap_1920_mean_200 <- ames %>%
+  specify(response = before_1920) %>%
+  generate(reps = 200, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+```{r}
+mean_mean_200 <- bootstrap_1920_mean_200 %>% 
+  summarise(mean(stat))
+```
+
+```{r}
+ci_1920_200_95 <- bootstrap_1920_mean_200 %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+ci_1920_200_95
+```
+```{r}
+bootstrap_1920_mean_200 %>%
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = ci_1920_200_95)
+```
+
+```{r}
+bootstrap_1920_mean_1000 <- ames %>%
+  specify(response = before_1920) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+```{r}
+mean_mean_1000 <- bootstrap_1920_mean_1000 %>% 
+  summarise(mean(stat))
+```
+```{r}
+ci_1920_1000_95 <- bootstrap_1920_mean_1000 %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+ci_1920_1000_95
+```
+```{r}
+bootstrap_1920_mean_1000 %>%
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = ci_1920_1000_95)
+```
+
+```{r}
+bootstrap_1920_mean_10000 <- ames %>%
+  specify(response = before_1920) %>%
+  generate(reps = 10000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+```{r}
+mean_mean_10000 <- bootstrap_1920_mean_10000 %>% 
+  summarise(mean(stat))
+```
+```{r}
+ci_1920_10000_95 <- bootstrap_1920_mean_10000 %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+ci_1920_10000_95
+```
+```{r}
+bootstrap_1920_mean_50000 <- ames %>%
+  specify(response = before_1920) %>%
+  generate(reps = 50000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+```{r}
+mean_mean_50000 <- bootstrap_1920_mean_50000 %>% 
+  summarise(mean(stat))
+```
+```{r}
+ci_1920_50000_95 <- bootstrap_1920_mean_50000 %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+ci_1920_50000_95
+```
+```{r}
+confidence_intervals <- rbind(ci_1920_200_95, ci_1920_1000_95, ci_1920_10000_95, ci_1920_50000_95)
+```
+```{r}
+means <- rbind(mean_mean_200, mean_mean_1000, mean_mean_10000, mean_mean_50000)
+```
+```{r}
+means_intervals <- cbind(confidence_intervals, means)
+```
+```{r}
+reps <- c(200, 1000, 10000, 50000)
+means_intervals <- cbind(reps, means_intervals)
+names(means_intervals) <- c("reps", "lower_bound", "upper_bound", "means")
+```
+```{r}
+means_intervals %>% 
+  ggplot() +
+  aes(x = reps, y = means) +
+  geom_line() +
+  labs(title = "means of the sampling distributions")
+```
+```{r}
+means_intervals %>% 
+  ggplot() +
+  aes(x = reps, y = lower_bound) +
+  geom_line() +
+  labs(title = "lower bounds of the sampling distributions")
+```
+```{r}
+means_intervals %>% 
+  ggplot() +
+  aes(x = reps, y = upper_bound) +
+  geom_line() +
+  labs(title = "upper bounds of the sampling distributions")
+```
+
+There aren't big changes in the mean or in the confidence intervals due to the different reps used. 
+The mean was a bit bigger than the others for 200 reps, having almost the same value for 1000, 10000 and 50000 reps. However, the difference in means between 200 reps and the others is just around a 0.3%. 
+
+It is possible to state that there aren't big changes in the mean or in the confidence intervals due to the different reps used, at least for these numbers of reps. We can test with smaller numbers of reps. 
+
+```{r}
+bootstrap_1920_mean_2 <- ames %>%
+  specify(response = before_1920) %>%
+  generate(reps = 2, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+```{r}
+mean_mean_2 <- bootstrap_1920_mean_2 %>% 
+  summarise(mean(stat))
+mean_mean_2
+```
+```{r}
+ci_1920_2_95 <- bootstrap_1920_mean_2 %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+ci_1920_2_95
+```
+
+The means and confidence intervals change for small numbers of reps. This means that they change with the reps. However, for bigger numbers of reps, this change is not significant. 
+

@@ -1,0 +1,114 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+1.1
+```{r}
+library(tidyverse)
+library(infer)
+```
+```{r}
+data("msleep")
+```
+```{r}
+msleep
+```
+
+H0: Jabberwockies_sleep_total - μ sleep total = 0
+Ha: Jabberwockies_sleep_total - μ sleep total != 0
+Critical value = 0.05
+
+```{r}
+msleep <- msleep %>% 
+filter(!is.na(sleep_total))
+```
+```{r}
+msleep %>%
+  ggplot(aes(x = sleep_total)) +
+  geom_histogram(col = "white")
+```
+```{r}
+msleep %>%
+  ggplot(aes(y = sleep_total)) +
+  geom_boxplot() +
+  coord_flip()
+```
+```{r}
+observed_stat <- msleep %>%
+  summarise(mean_sleep_total = mean(sleep_total))
+observed_stat
+```
+
+The observed stat in the sample is 10.4. It is bigger than 7. Let's check if the reason for that difference is sampling variation or it is a statistically significant difference.
+
+```{r}
+null_distribution <- msleep %>%
+  specify(response = sleep_total) %>%
+  hypothesize(null = "point", mu = 7) %>%
+  generate(reps = 10000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+```{r}
+null_distribution %>%
+  visualise(bins = 30) + 
+  shade_p_value(obs_stat = observed_stat$mean_sleep_total, direction = "both")
+```
+
+```{r}
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = observed_stat$mean_sleep_total, direction = "both")
+p_value
+```
+Here the p-value is 0, and so we reject H0 in favour of Ha. The mean of hours slept by the animals in the population is significatly different from the 7 hours slept by Jabberwockies as an average. 
+
+--------------
+
+H0: Omnivores_sleep_total - hervivores_sleep_total <= 0
+Ha: Omnivores_sleep_total - hervivores_sleep_total > 0
+
+```{r}
+msleep %>%
+  filter(vore %in% c("omni", "herbi")) %>% 
+  ggplot(aes(y = sleep_total, x = vore)) +
+  geom_boxplot()
+```
+The hours slept by the omnivores are much more centralised than that of herbivores. 
+```{r}
+msleep <- msleep %>% 
+  filter(vore %in% c("omni", "herbi"))
+```
+```{r}
+msleep %>%
+  group_by(vore) %>%
+  summarise(n = n())
+```
+
+```{r}
+null_distribution <- msleep %>% 
+  specify(sleep_total ~ vore) %>%
+  hypothesize(null = "independence") %>% 
+  generate(reps = 10000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("omni", "herbi")) 
+
+null_distribution
+```
+```{r}
+observed_stat <- msleep %>% 
+  specify(sleep_total ~ vore) %>%
+  calculate(stat = "diff in means", order = c("omni", "herbi"))
+  
+observed_stat
+```
+```{r}
+null_distribution %>%
+  visualise() +
+  shade_p_value(obs_stat = observed_stat, direction = "right")
+```
+
+```{r}
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = observed_stat, direction = "right")
+
+p_value
+```
+The p-value is bigger than 0.05, so we fail to reject H0: there is no significant evidence that omnivores sleep longer than herbivores.
