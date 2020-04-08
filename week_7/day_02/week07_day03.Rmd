@@ -1,0 +1,168 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+library(lubridate)
+library(tsibble)
+library(tsibbledata)
+library(fable)
+install.packages("urca")
+library(urca)
+```
+
+1 Question 1
+Load in the nyc_bikes data from the tsibbledata package. Have an initial look at it to see what you’re working with. Create three new columns: one that stores only the year the bike was used, one that stores only the month the bike was used, and one that stores the date. Use the data stored in start_time to create these new columns.
+
+```{r}
+bikes <- tsibbledata::nyc_bikes
+```
+
+```{r}
+bikes <- bikes %>% 
+  mutate(year = year(start_time), 
+         month = month(start_time), 
+         date = date(start_time))
+```
+
+2 Question 2
+Summarise the number of bike hire counts by month. Make a plot of this data. *Hint: remember that to group time series (tsibble) data, you need to use index_by instead of group_by before your summarise function. What does this plot tell you about the time series? Do you think this downsampled data would be adequate to build a forecast with?
+
+```{r}
+bikes_month <- bikes %>% 
+  index_by(month) %>% 
+  summarise(number = n())
+```
+```{r}
+bikes_month %>% 
+  ggplot()+
+  aes(x = month, y = number)+
+  geom_line()
+```
+
+There is a peak in the central months of the year, corresponding to the Summer in New York. We would need data from more than one year to build a forecast with, as this data has a seasonal pattern. 
+
+
+3 Question 3
+Now Summarise the number of bike hire counts by date. Make a plot of this new aggregated data. What does this plot tell you about the time series? Would this data be preferrable for time series forecasting compared to the monthly data?
+
+```{r}
+bikes_date <- bikes %>% 
+  index_by(date) %>% 
+  summarise(number = n())
+```
+```{r}
+bikes_date %>% 
+  ggplot()+
+  aes(x = date, y = number)+
+  geom_line()
+```
+It is preferrable because it contains more information, for example, there is also seasonality corresponding to the days of the week.
+
+
+4 Question 4
+Let’s begin to build a model. For this, we will test the NAIVE, MEAN, and SNAIVE model.
+
+However, the first thing you’ll notice when you try and build a model is that you get an error:
+
+.data contains implicit gaps in time. You should check your data and convert implicit gaps into explicit missing values using tsibble::fill_gaps() if required.
+
+First, create a new tibble which uses the fill_gaps() function to fill in missing values. You haven’t come across this in class, but you should be able to look it up and use it using the help. Think about what value you might want to fill the missing values with. Justify your choice.
+Hint: think back to our missing values lesson. Do you want to leave them blank? Or do you want to impute each day with the median, last observation carried forward, etc.
+
+Once you’ve done that, build your models.
+
+If you cant figure out how to use the fill_gaps() function, you can use the code below. But do try first!
+
+```{r}
+nyc_bikes_filled <- bikes_date %>%
+  mutate(bike_hire_counts = number) %>% 
+  fill_gaps(bike_hire_counts = as.integer(median(bike_hire_counts)))
+```
+I filled it with the median of the year (as in the hint), but it probably would be better filled with the median of the month. 
+
+```{r}
+nyc_bikes_models <- nyc_bikes_filled %>% 
+  model(
+    snaive = SNAIVE(bike_hire_counts),
+    mean_model = MEAN(bike_hire_counts),
+    arima = ARIMA(bike_hire_counts)
+  )
+```
+
+5 Question 5
+Now we have our model fit, build a forecast to predict bike use over the next four months. Plot your models alongside your data.
+Hint: forecast parameter would be roughly 120 (30 days x 4 months)
+
+```{r}
+forecast <- nyc_bikes_models %>%
+  fabletools::forecast(h = 120)
+forecast
+```
+
+```{r}
+forecast %>%
+  autoplot(nyc_bikes_filled) +
+  ggtitle("Forecasts for number of bikes hired in NY") +
+  xlab("Date") +
+  guides(colour = guide_legend(title = "Forecast"))
+```
+
+```{r}
+forecast %>%
+  filter(.model == "snaive") %>% 
+  autoplot(nyc_bikes_filled) +
+  ggtitle("Forecasts for number of bikes hired in NY") +
+  xlab("Date") +
+  guides(colour = guide_legend(title = "Forecast"))
+```
+```{r}
+forecast %>%
+  filter(.model == "arima") %>% 
+  autoplot(nyc_bikes_filled) +
+  ggtitle("Forecasts for number of bikes hired in NY") +
+  xlab("Date") +
+  guides(colour = guide_legend(title = "Forecast"))
+```
+The model that works the best is the naive model, but non of them represent the seasonality corresponding to the different seasons of the year. 
+
+6 Question 6
+Test your model accuracy : choose a training data set from your main dataset, build a forecast on the training set, and then plot the training set forecast against the real data. Calculate model accuracy.
+
+```{r}
+train <- nyc_bikes_filled %>%
+  filter(date <= as_date("2018-09-01"))
+```
+
+```{r}
+fit_test <- train %>%
+  model(
+    mean_model = MEAN(bike_hire_counts),
+    arima = ARIMA(bike_hire_counts),
+    snaive = SNAIVE(bike_hire_counts))
+```
+```{r}
+forecast_test <- fit_test %>% 
+  fabletools::forecast(h = 120)
+```
+```{r}
+forecast_test %>%
+  autoplot(train, level = NULL) +
+    autolayer(filter_index(nyc_bikes_filled, "2018-09-01" ~ .), color = "black") +
+    ggtitle("Forecasts for quarterly beer production") +
+    xlab("Year") + ylab("Megalitres") +
+    guides(colour=guide_legend(title="Forecast"))
+```
+The model that fits it better is the median one, as the other two don't have in count the seasonality corresponding to the seasons of the year. 
+
+```{r}
+accuracy_model <- fabletools::accuracy(forecast_test, nyc_bikes_filled)
+```
+
+According to the accuracy_model, the least bad model is the mean_model.
+
+7 Question 7
+Look at your forecast plots and accuracy values. Describe your results. Are your models a good fit for the data? If not, why not? What would you suggest doing with the data if you were expected to present these back to a client? For example, would you ask for more data? Would you test a different model?
+
+The results are poor. The models doesn't fit well the data because of the seasonality of the seasons of the year. To correct this, data from more years would be necessary. With data form more years I think the arima model could be a good fit, as long as trained over a whole year or trained in one season for the same season the year after. Here the arima model was worse than the naive model in predicting the seasonality corresponding to the days of the week, I think because of the means inputed to the blank values. 
