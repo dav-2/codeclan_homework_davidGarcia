@@ -1,0 +1,110 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(modelr)
+library(ggfortify)
+```
+
+
+```{r}
+project <- read_csv("project_management.csv")
+```
+```{r}
+project <- as.tibble(project)
+```
+
+```{r}
+project %>% 
+  ggplot()+
+  aes(x = estimated_length, y = actual_length)+
+  geom_point()
+plot(project$estimated_length, project$actual_length)+
+  text(project$estimated_length, project$actual_length, labels = seq(nrow(project)), cex = 0.7, pos = 2)
+```
+I think the data in the row 5, 29 and 18 are outliers. The data in row 5 is influential due to its leverage. 
+
+```{r}
+model <- lm(formula = actual_length ~ estimated_length, data = project)
+model
+```
+
+```{r}
+project <- project %>%
+  add_predictions(model) %>%
+  add_residuals(model)
+```
+
+```{r}
+project %>%
+  ggplot(aes(x = estimated_length)) +
+  geom_point(aes(y = actual_length)) +
+  geom_line(aes(y = pred), col = "red")
+```
+
+```{r}
+autoplot(model)
+```
+Number 5 is influential due to its leverage. 
+
+```{r}
+project_2 <- project %>% 
+  filter(X1 != 18)
+```
+
+```{r}
+model_2 <- lm(formula = actual_length ~ estimated_length, data = project_2)
+model_2
+```
+Intercept is 0.175 days bigger. The coefficient is just 0.001 smaller. I don't think it is a great difference, so it would support classifying the omitted point as non-influential. 
+
+```{r}
+project_2 <- project_2 %>%
+  add_predictions(model_2) %>%
+  add_residuals(model_2)
+```
+
+```{r}
+project_2 %>% 
+  ggplot(aes(x = estimated_length)) +
+  geom_point(aes(y = actual_length)) +
+  geom_line(aes(y = pred), col = "red")+
+  geom_line(data = project, aes(y = pred), col = "black")
+```
+The lines are almost one over each other. This confirms that the outlier removed was non-influential. 
+
+```{r}
+project_3 <- project %>% 
+  filter(X1 != 5)
+```
+
+```{r}
+model_3 <- lm(formula = actual_length ~ estimated_length, data = project_3)
+model_3
+```
+Intercept is 2.965 days bigger and the coefficient 0.212 smaller. This supports classifying the omitted point as an influential outlier. 
+
+```{r}
+project_3 <- project_3 %>%
+  add_predictions(model_3) %>%
+  add_residuals(model_3)
+```
+
+```{r}
+project_3 %>% 
+  ggplot(aes(x = estimated_length)) +
+  geom_point(aes(y = actual_length)) +
+  geom_line(aes(y = pred), col = "red")+
+  geom_line(data = project, aes(y = pred), col = "black")
+```
+The lines differ enough to state that the outlier removed was influential. 
+
+```{r}
+autoplot(model)
+```
+Residuals are fairly independent from each other as the line is almost horizontal and is near 0. 
+Removing the outliers in lines 5 and 16, the residuals would be almost completely normally distributed.
+The blue line wobbles round 0.8, so the residuals show no big systematic increase or decrease in variation across the range of data. This variation is a bit modified by the outlier in line 5. 
