@@ -1,0 +1,154 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(GGally)
+library(fastDummies)
+```
+
+
+```{r}
+diamonds <- read_csv("diamonds.csv")
+```
+
+```{r}
+model <- lm(carat ~ x + y + z, data = diamonds)
+```
+```{r}
+summary(model)
+```
+```{r}
+par(mfrow = c(2,2))
+plot(model)
+```
+p-values are much smaller than 0.05. 
+I would say that the residuals are fairly independent from each other, as they are more or less scattered around the value 0. However, we can see some dependency for the biggest fitted values. 
+Residuals distribution is normal from the theoretical quantile -4 to 3. It is not normal for the outliers between 3 and 4. 
+The residuals variation shows some increase in the extremes, but it is not much. 
+Overall I would say we can trust the p-values, as all this conditions are fulfilled. 
+```{r}
+diamonds_2 <- diamonds %>% 
+  select(carat, x, y, z)
+```
+
+
+```{r}
+ggpairs(diamonds_2)
+```
+There is a big correlation among all the variables. 
+
+```{r}
+diamonds_3 <- diamonds %>% 
+  select(-x, -y, -z)
+```
+
+
+```{r}
+ggpairs(diamonds_3)
+```
+
+
+```{r}
+diamonds_3 %>%
+  ggplot(aes(x = carat, y = price)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+diamonds_3 %>%
+  ggplot(aes(x = cut, y = price)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+```{r}
+diamonds_3 %>%
+  ggplot(aes(x = color, y = price)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+```{r}
+diamonds_3 %>%
+  ggplot(aes(x = clarity, y = price)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+
+
+```{r}
+diamonds_3 %>%
+  ggplot(aes(x = depth, y = price)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+```{r}
+diamonds_3 %>%
+  ggplot(aes(x = table, y = price)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+There is a big possitive correlation between price and carat (0.922), a small possitive one between price and table (0.127) and an almost inexistent negative one between price and depth (-0.0106).
+
+cut --> 5 factor levels, 4 dummy variables
+clarity --> 8 factor levels, 7 dummy variables
+color -->  7 factor levels, 6 dummy variables
+
+```{r}
+diamonds_3_dummy <- diamonds_3 %>%
+  dummy_cols(select_columns = "cut", remove_first_dummy = TRUE) %>% 
+  dummy_cols(select_columns = "clarity", remove_first_dummy = TRUE) %>% 
+  dummy_cols(select_columns = "color", remove_first_dummy = TRUE)
+```
+```{r}
+model_6 <- lm(price ~ carat, data = diamonds_3)
+summary(model)
+```
+```{r}
+par(mfrow = c(2, 2))
+plot(model_6)
+```
+
+```{r}
+model_7 <- lm(price ~ log(carat), data = diamonds_3)
+summary(model_7)
+```
+It is worse (R decreased). 
+
+```{r}
+model_8 <- lm(log(price) ~ carat, data = diamonds_3)
+summary(model_8)
+```
+Slightly worse. 
+
+```{r}
+model_8 <- lm(log(price) ~ log(carat), data = diamonds_3)
+summary(model_8)
+```
+Stronger correlation. 
+
+
+```{r}
+model_9 <- lm(log(price) ~ log(carat) + cut, data = diamonds_3)
+```
+```{r}
+summary(model_9)
+```
+```{r}
+model_10 <- lm(log(price) ~ log(carat) + color, data = diamonds_3)
+```
+```{r}
+summary(model_10)
+```
+```{r}
+model_11 <- lm(log(price) ~ log(carat) + clarity, data = diamonds_3)
+```
+```{r}
+summary(model_11)
+```
+
+The best one is clarity, generating an R squared of 9.654.
