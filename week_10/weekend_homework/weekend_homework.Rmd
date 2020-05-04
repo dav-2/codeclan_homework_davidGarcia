@@ -1,0 +1,127 @@
+---
+title: "Homework Quiz"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(leaps)
+```
+```{r}
+avocado <- read_csv("avocado.csv") %>% 
+  clean_names() %>% 
+  select(-x1) %>% 
+  mutate(type = as.factor(type)) %>% 
+  mutate(region = as.factor(region))
+```
+```{r}
+alias(average_price ~ ., data = avocado)
+```
+
+
+```{r}
+regsubsets_backward <- regsubsets(average_price ~ ., data = avocado, nvmax = 14, method = "backward")
+
+plot(regsubsets_backward, scale = "adjr2")
+```
+
+```{r}
+plot(regsubsets_backward, scale = "bic")
+```
+```{r}
+avocado2 <- read_csv("avocado.csv") %>% 
+  clean_names() %>% 
+  select(-x1) %>% 
+  mutate(type = as.factor(type)) %>% 
+  mutate(region = as.factor(region)) %>% 
+  select(-region)
+```
+```{r}
+regsubsets_backward2 <- regsubsets(average_price ~ ., data = avocado2, nvmax = 13, method = "backward")
+
+plot(regsubsets_backward2, scale = "adjr2")
+```
+
+```{r}
+plot(regsubsets_backward2, scale = "bic")
+```
+
+```{r}
+library(GGally)
+avocado2 %>%
+  ggpairs()
+```
+
+```{r}
+avocado <- avocado %>%
+  fastDummies::dummy_cols(select_columns = "type", remove_first_dummy = TRUE) %>% 
+  fastDummies::dummy_cols(select_columns = "region", remove_first_dummy = TRUE) %>% 
+  select(-c(type, region))
+```
+
+```{r}
+pca <- prcomp(avocado, center = TRUE, scale. = TRUE)
+```
+
+I want to predict how well 6 year-olds are going to do in their final school exams. Using the following variables am I likely under-fitting, fitting well or over-fitting? Postcode, gender, reading level, score in maths test, date of birth, family income.
+
+Over-fitting. It is true that all of those variables could have influence on the grades on that exam, but there probably are correlations between some of the variables. I would just stick to reading level and score in maths test for a good-fitting model. 
+
+
+If I have two models, one with an AIC score of 34,902 and the other with an AIC score of 33,559 which model should I use?
+
+If both are statistically significant, the one with AIC of 33,559. 
+
+
+I have two models, the first with: r-squared: 0.44, adjusted r-squared: 0.43. The second with: r-squared: 0.47, adjusted r-squared: 0.41. Which one should I use?
+
+If both are statistically significant, the one with adjusted r-squared of 0.43.
+
+
+I have a model with the following errors: RMSE error on test set: 10.3, RMSE error on training data: 10.4. Do you think this model is over-fitting?
+
+No, it is explaining well the data in the test too. If it wasn't, the RMSE error would be significantly greater on test set than on trainning data. 
+
+
+How does k-fold validation work?
+
+First we split our data into x parts (normally x = 10), then we make a model x times. Each time we hold out one of the x folds as the test set, and train the data on the other x - 1 folds. 
+Once the process is finished we can average the error across all the test folds. This gives us a very accurate measure of of the model performance.
+
+
+What is a validation set? When do you need one?
+
+The validation set is a set of data used neither in training or to compare models against each other. It is useful to avoid creating a model that over-fits the test set. The validation set should only be used once the model is selected. 
+
+We need them if we are carrying out a complex model building process, particularly if we are comparing several types of models. It is really useful when fitting models that have hyper parameters. 
+
+
+Describe how backwards selection works.
+
+We start with a model with all the predictors, check all of them, and find the one that lowers r2 the least when it is removed. We then remove it and keep note of the number of predictors in the model and the model formula. We repeat this process for the current model and then for the next one until we drop all the predictors which enworsen the parsimonious measures of goodness of fit. 
+
+
+Describe how best subset selection works.
+
+At each size of model, it search all possible combinations of predictors for the best model of that size.
+
+
+It is estimated on 5% of model projects end up being deployed. What actions can you take to maximise the likelihood of your model being deployed?
+
+What metric could you use to confirm that the recent population is similar to the development population?
+
+How is the Population Stability Index defined? What does this mean in words?
+
+Above what PSI value might we need to start to consider rebuilding or recalibrating the model
+
+What are the common errors that can crop up when implementing a model?
+
+After performance monitoring, if we find that the discrimination is still satisfactory but the accuracy has deteriorated, what is the recommended action?
+
+Why is it important to have a unique model identifier for each model?
+
+Why is it important to document the modelling rationale and approach?
+
