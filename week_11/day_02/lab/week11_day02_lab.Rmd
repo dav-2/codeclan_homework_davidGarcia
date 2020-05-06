@@ -1,0 +1,154 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(GGally)
+library(pROC)
+library(modelr)
+library(caret)
+```
+
+
+```{r}
+teleco <- read_xlsx("telecomms_churn.xlsx") %>% 
+  clean_names() %>% 
+  select(-customer_id)
+```
+
+```{r}
+ggpairs(teleco)
+```
+```{r}
+ggsave("pairs_plot_choice.png", width = 10, height = 10, units = "in")
+```
+
+```{r}
+teleco <- teleco %>% 
+  mutate_if(is.character, as.factor) %>% 
+  mutate(senior_citizen = factor(senior_citizen, levels = c(0, 1), labels = c("No", "Yes")))
+  
+?mutate_if
+```
+
+
+```{r}
+model_total_charges <- glm(churn ~ total_charges, data = teleco, family = binomial(link = 'logit'))
+model_total_charges         
+```
+```{r}
+summary(model_total_charges)
+```
+
+```{r}
+model_contract <- glm(churn ~ contract, data = teleco, family = binomial(link = 'logit'))
+model_contract 
+```
+```{r}
+summary(model_contract)
+```
+
+```{r}
+model_phone_service <- glm(churn ~ phone_service, data = teleco, family = binomial(link = 'logit'))
+model_phone_service
+```
+```{r}
+summary(model_phone_service)
+```
+model_phone_service is not statistically significant. 
+```{r}
+model_tenure <- glm(churn ~ tenure, data = teleco, family = binomial(link = 'logit'))
+model_tenure        
+```
+```{r}
+summary(model_tenure)
+```
+model_tenure is not statistically significant
+```{r}
+model_dependents <- glm(churn ~ dependents, data = teleco, family = binomial(link = 'logit'))
+model_dependents
+```
+```{r}
+summary(model_dependents)
+```
+```{r}
+teleco_pred_total_charges <- teleco %>%
+  add_predictions(model_total_charges, type = "response")
+```
+
+```{r}
+teleco_pred_contract <- teleco %>%
+  add_predictions(model_contract, type = "response")
+```
+```{r}
+teleco_pred_dependents <- teleco %>%
+  add_predictions(model_dependents, type = "response")
+```
+```{r}
+roc_total_charges <- teleco_pred_total_charges %>%
+  roc(response = churn, predictor = pred)
+```
+```{r}
+roc_contract <- teleco_pred_contract %>%
+  roc(response = churn, predictor = pred)
+```
+```{r}
+roc_dependents <- teleco_pred_dependents %>%
+  roc(response = churn, predictor = pred)
+```
+
+```{r}
+roc_curve_total_charges <- ggroc(data = roc_total_charges, legacy.axes = TRUE) +
+  coord_fixed()
+
+roc_curve_total_charges
+```
+
+```{r}
+roc_curve_contract <- ggroc(data = roc_contract, legacy.axes = TRUE) +
+  coord_fixed()
+
+roc_curve_contract
+```
+```{r}
+roc_curve_dependents <- ggroc(data = roc_dependents, legacy.axes = TRUE) +
+  coord_fixed()
+
+roc_curve_dependents
+```
+
+No ROC curve is good. The one for contract is a bit better. The other two are almost random guessing classifiers. 
+
+```{r}
+auc(roc_total_charges)
+```
+
+```{r}
+auc(roc_contract)
+```
+
+```{r}
+auc(roc_dependents)
+```
+The contract classifier has a better auc value. It is likely to be a better classifier. 
+```{r}
+train_control <- trainControl(method = "repeatedcv", 
+                              number = 5,
+                              repeats = 100,
+                              savePredictions = TRUE, 
+                              classProbs = TRUE, 
+                              summaryFunction = twoClassSummary)
+```
+
+```{r}
+train_total_charges <- train(churn ~ total_charges,
+               data = teleco,
+               trControl = train_control,
+               method = "glm",
+               family = binomial(link = 'logit'))
+```
+

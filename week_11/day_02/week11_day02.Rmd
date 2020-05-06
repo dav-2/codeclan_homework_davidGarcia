@@ -1,0 +1,91 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(rpart)
+library(rpart.plot)
+library(tidyverse)
+library(GGally)
+
+library(tidyverse)
+titanic_set <- read_csv('titanic_decision_tree_data.csv')
+
+shuffle_index <- sample(1:nrow(titanic_set))
+
+# shuffle the data so class order isn't in order - need this for training/testing split later on 
+titanic_set <- titanic_set[shuffle_index, ]
+```
+
+```{r}
+titanic_clean <- titanic_set %>%
+  filter(survived %in% c(0,1)) %>%
+# Convert to factor level
+    mutate(sex = as.factor(sex), 
+           age_status = as.factor(if_else(age <= 16, "child", "adult")),
+         class = factor(pclass, levels = c(3,2,1), labels = c("Lower", "Middle", "Upper")), 
+           survived_flag = factor(survived, levels = c(0,1), labels = c("No", "Yes")), 
+           port_embarkation = as.factor(embarked)) %>%
+  select(sex, age_status, class, port_embarkation, sib_sp, parch, survived_flag) %>%
+  na.omit()
+```
+
+```{r}
+titanic_clean %>%
+  ggpairs()
+```
+The variable survived shows correlation with sex, age_status, class, port_embarkation and probably parch. 
+The probability of surviving was bigger for women, childreen, first and second class and port_embarkation != S. 
+
+```{r}
+n_data <- nrow(titanic_clean)
+
+
+test_index <- sample(1:n_data, size = n_data*0.25)
+
+
+test  <- slice(titanic_clean, test_index)
+
+
+train <- slice(titanic_clean, -test_index)
+```
+I have chosen 0.25 because we don't have much data. 
+
+```{r}
+test %>%
+ janitor::tabyl(survived_flag)
+```
+```{r}
+train %>%
+ janitor::tabyl(survived_flag)
+```
+
+The results are almost equal. It is balanced. 
+
+```{r}
+titanic_fit <- rpart(survived_flag ~ ., 
+                     data = train, 
+                     method = 'class')
+
+rpart.plot(titanic_fit, yesno = 2)
+```
+
+```{r}
+rpart.rules(titanic_fit, cover = TRUE)
+```
+```{r}
+library(modelr)
+
+# add the predictions
+titanic_test_pred <- test %>%
+                 add_predictions(titanic_fit, type = 'class')
+```
+```{r}
+rpart.predict(titanic_fit, newdata=test[1:4,], rules=TRUE)
+```
+
+The important variables are sex, class, port_embarkation, parch and age_status. 
+
+People with the highest probability of surviving were not males and didn't travel in lower class. They had a 95% probability of surving. 
+People with the lowest probability of surviving were males, travelling in lower or middle class, not adults and sib_sp >= 3. 
