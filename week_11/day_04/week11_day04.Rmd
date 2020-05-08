@@ -1,0 +1,201 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(tidytext)
+install.packages("ggwordcloud")
+library(ggwordcloud)
+install.packages("hcandersenr")
+library(hcandersenr)
+library(harrypotter)
+library(janeaustenr)
+install.packages("text2vec")
+library(text2vec)
+library(ggplot2)
+library(GGally)
+library(leaps)
+```
+
+
+```{r}
+hcandersen_en
+```
+```{r}
+glimpse(movie_review)
+```
+
+1 Word clouds in ggplot
+
+```{r}
+mermaid_df <- hcandersen_en %>% 
+  filter(book == "The little mermaid") %>% 
+  unnest_tokens(word, text) %>% 
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE)
+```
+
+```{r}
+mermaid_plot <- ggwordcloud(mermaid_df$word, mermaid_df$n)
+```
+```{r}
+ggsave("mermaid_plot.png", width = 10, height = 10, units = "in")
+```
+
+2 Bar chart of top words
+
+```{r}
+mermaid_df2 <- hcandersen_en %>% 
+  filter(book == "The little mermaid") %>% 
+  unnest_tokens(word, text) %>% 
+  inner_join(get_sentiments("bing")) %>% 
+  count(word, sort = TRUE) %>% 
+  filter(row_number() <= 10) %>% 
+  inner_join(get_sentiments("bing"))
+```
+
+```{r}
+mermaid_df2 %>% 
+ggplot() +
+  aes(x = reorder(word, -n), y = n, fill = sentiment) +
+  geom_col() +
+  labs(title= "Top 10 sentiment words in The Little Mermaid",
+                      y="times written", x = "word")
+```
+```{r}
+book_3 <- 
+tibble(
+  chapter = 1:length(chamber_of_secrets),
+  text = chamber_of_secrets
+) %>% 
+  unnest_tokens(bigram, text, token = "ngrams", n = 2) %>% 
+  separate(bigram, c("word_1", "word_2"), sep = " ") %>%
+  inner_join(get_sentiments("bing"), by = c("word_2" = "word")) %>% 
+  filter(word_1 %in% c("very", "Very")) %>% #I added Very, just in case.
+  count(word_2, sort = TRUE) %>% 
+  filter(row_number() <= 10)
+```
+
+3
+
+```{r}
+books <- list(philosophers_stone, chamber_of_secrets, prisoner_of_azkaban, goblet_of_fire, order_of_the_phoenix, half_blood_prince, deathly_hallows)
+
+harry_potter <- purrr::map_chr(books, paste, collapse = " ") 
+harry_potter <- paste(harry_potter, collapse = " ")
+jane_austen <- paste(janeaustenr::austen_books()$text, collapse = " ")
+hcandersen <- paste(hcandersen_en$text, collapse = " ")
+```
+
+```{r}
+everyone <- tibble(
+  text = c(harry_potter, jane_austen, hcandersen),
+  author = c("jk_rowling", "jane_austen", "hcandersen")
+)
+```
+
+```{r}
+idf <- everyone %>% 
+  unnest_tokens(word, text) %>% 
+  count(word, author) %>%
+  bind_tf_idf(word, author, n) %>%
+  group_by(author) %>% 
+  arrange(author, desc(tf_idf)) %>% 
+  filter(row_number()<= 5)
+
+idf
+```
+
+4
+```{r}
+original_df <- movie_review %>% 
+  unnest_tokens(word, review)
+```
+
+
+```{r}
+common_words <- movie_review %>% 
+  unnest_tokens(word, review) %>% 
+  count(word, sort = T) %>% 
+  filter(row_number()<=50) %>% 
+  inner_join(original_df)
+```
+```{r}
+dummy_common_words <- common_words %>%
+  fastDummies::dummy_cols(select_columns = "word", remove_first_dummy = TRUE) %>% 
+  select(-c("word", "n", "id"))
+
+dummy_common_words
+```
+
+```{r}
+model_common_words <- lm(sentiment ~ ., data = dummy_common_words)
+```
+```{r}
+anova(model_common_words)
+```
+
+
+```{r}
+regsubsets_backward <- regsubsets(sentiment ~ ., data = dummy_common_words, nvmax = 52, method = "backward")
+```
+```{r}
+summary(regsubsets_backward)
+```
+
+```{r}
+plot(regsubsets_backward, scale = "bic")
+```
+
+```{r}
+model <- lm(sentiment ~ word_and + word_as + word_be + word_br + word_have + word_her + word_his + word_i + word_if + word_in + word_just + word_like + word_movie + word_not + word_or + word_so + word_the + word_they + word_this + word_was, data = dummy_common_words)
+summary(model)
+```
+R-squared is awful. Let's try with the first 50 words in a sentiment list. 
+
+```{r}
+common_words_sentiments <- movie_review %>% 
+  unnest_tokens(word, review) %>% 
+  inner_join(get_sentiments("bing"), by = c("word", "word")) %>% 
+  count(word, sort = T) %>% 
+  filter(row_number()<=50) %>% 
+  inner_join(original_df)
+```
+
+
+
+```{r}
+dummy_common_sentiments <- common_words_sentiments %>%
+  fastDummies::dummy_cols(select_columns = "word", remove_first_dummy = TRUE) %>% 
+  select(-c("word", "n", "id"))
+
+dummy_common_sentiments
+```
+
+```{r}
+model_common_sentiments <- lm(sentiment ~ ., data = dummy_common_sentiments)
+```
+```{r}
+anova(model_common_sentiments)
+```
+
+
+```{r}
+regsubsets_sentiments_backward <- regsubsets(sentiment ~ ., data = dummy_common_sentiments, nvmax = 52, method = "backward")
+```
+```{r}
+summary(regsubsets_sentiments_backward)
+```
+
+
+```{r}
+model_sentiments <- lm(sentiment ~ word_beautiful + word_best + word_classic + word_dark + word_enjoy + word_entertaining + word_excellent + word_fun + word_good + word_great + word_like + word_love + word_loved + word_perfect + word_recommend + word_top + word_well + word_wonderful + word_work + word_works, data = dummy_common_sentiments)
+summary(model_sentiments)
+```
+It is a bit better, but not much.
+
+
+
