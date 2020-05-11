@@ -1,0 +1,173 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(glmulti)
+library(modelr)
+library(pROC)
+library(caret)
+```
+
+
+```{r}
+juice <- read_csv("logistic_regression_data/orange_juice.csv") %>% 
+  clean_names() %>% 
+  mutate(purchase_mm = as.logical(ifelse(purchase == "MM", 1, 0))) %>% 
+  mutate(quarterof_purchase = as.factor(cut(weekof_purchase, breaks = c(227, 240, 253, 266, 279), right = FALSE, labels = c("first", "second", "third", "forth"))),
+         store_id = as_factor(store_id),
+         special_ch = as.factor(special_ch),
+         special_mm = as.factor(special_mm),
+         store7 = as.factor(store7),
+         store = as.factor(store)
+         ) %>% 
+  select(-c(purchase, weekof_purchase, sale_price_mm, sale_price_ch, price_diff, list_price_diff, store7, store))
+```
+```{r}
+alias(purchase_mm ~ ., data = juice)
+```
+```{r}
+glmulti_search_all_mains <- glmulti(
+  purchase_mm ~ ., 
+  data = juice,
+  level = 1,               # No interactions considered, main effects only
+  method = "h",            # Exhaustive approach
+  crit = "bic",            # BIC as criteria
+  confsetsize = 10,        # Keep 10 best models
+  plotty = F, 
+  report = T,              # No plots, but provide interim reports
+  fitfunction = "glm",     # glm function
+  family = binomial(link = "logit")) # binomial family for logistic regression
+
+summary(glmulti_search_all_mains)
+```
+
+```{r}
+glmulti_search_previous_mains_one_pair <- glmulti(
+  purchase_mm ~ price_ch + price_mm + disc_mm + loyal_ch + pct_disc_mm + pct_disc_ch, 
+  data = juice,
+  level = 2,               # Interactions considered
+  method = "h",            # Exhaustive approach
+  crit = "bic",            # BIC as criteria
+  confsetsize = 10,        # Keep 10 best models
+  marginality = TRUE,      # consider pairs only if both main effects in model
+  minsize = 7,             # minsize, maxsize and marginality here force 
+  maxsize = 7,             # inclusion of a single pair beyond the five main effects
+  plotty = F, 
+  report = T,              # No plots, but provide interim reports
+  fitfunction = "glm",     # glm function
+  family = binomial(link = "logit")) # binomial family for logistic regression
+
+summary(glmulti_search_previous_mains_one_pair)
+```
+Two of the interactions are better predictors than one of the main 6 variables. Let's try with a maxsize = 6 to find only one interaction.
+
+```{r}
+glmulti_search_previous_mains_one_pair <- glmulti(
+  purchase_mm ~ price_ch + price_mm + disc_mm + loyal_ch + pct_disc_mm + pct_disc_ch, 
+  data = juice,
+  level = 2,               # Interactions considered
+  method = "h",            # Exhaustive approach
+  crit = "bic",            # BIC as criteria
+  confsetsize = 10,        # Keep 10 best models
+  marginality = TRUE,      # consider pairs only if both main effects in model
+  minsize = 6,             # minsize, maxsize and marginality here force 
+  maxsize = 6,             # inclusion of a single pair beyond the five main effects
+  plotty = F, 
+  report = T,              # No plots, but provide interim reports
+  fitfunction = "glm",     # glm function
+  family = binomial(link = "logit")) # binomial family for logistic regression
+
+summary(glmulti_search_previous_mains_one_pair)
+```
+It keeps the original variables without interactions. Let's calculate ROC curves and AUC to compare how good classifiers are the two models for the training data. 
+
+```{r}
+model_no_interactions <- glm(purchase_mm ~ price_ch + price_mm + disc_mm + loyal_ch + pct_disc_mm + pct_disc_ch, 
+                  data = juice, family = binomial(link = 'logit'))
+
+juice_no_interactions <- juice %>%
+  add_predictions(model_no_interactions, type = "response")
+
+roc_obj_no_interactions <- juice_no_interactions %>%
+  roc(response = purchase_mm, predictor = pred)
+```
+
+```{r}
+model_interactions <- glm(purchase_mm ~ price_ch + price_mm + loyal_ch + pct_disc_mm + pct_disc_ch + pct_disc_mm:price_mm + pct_disc_ch:loyal_ch, 
+                  data = juice, family = binomial(link = 'logit'))
+
+juice_interactions <- juice %>%
+  add_predictions(model_interactions, type = "response")
+
+roc_obj_interactions <- juice_interactions %>%
+  roc(response = purchase_mm, predictor = pred)
+```
+
+```{r}
+roc_curve <- ggroc(data = list(model_no_interactions = roc_obj_no_interactions, model_interactions = roc_obj_interactions), legacy.axes = TRUE) +
+  coord_fixed()
+
+roc_curve
+```
+The ROC curves are almost equal and both are really good classifiers for the training data. Let's calculate AUCs. 
+
+```{r}
+auc(roc_obj_no_interactions, )
+```
+
+```{r}
+auc(roc_obj_interactions, )
+```
+
+The model with interactions has a slightly bigger area under the curve. But the difference is almost 0. 
+Both models show almost excellent ROC curves and AUCs. Thus both are almost excellent classifiers for the training data. Let's see how they perform on test data via cross validation.  
+
+```{r}
+train_control <- trainControl(method = "repeatedcv", 
+                              number = 5,
+                              repeats = 100,
+                              savePredictions = TRUE, 
+                              classProbs = TRUE, 
+                              summaryFunction = twoClassSummary)
+```
+```{r}
+juice_cross <- juice %>% 
+  mutate(purchase_mm = as.factor(if_else(purchase_mm, "t", "f")))
+```
+
+```{r}
+model_cross_no_interactions <- train(purchase_mm ~ price_ch + price_mm + disc_mm + loyal_ch + pct_disc_mm + pct_disc_ch,
+               data = juice_cross,
+               trControl = train_control,
+               method = "glm",
+               family = binomial(link = 'logit'))
+```
+
+```{r}
+summary(model_cross_no_interactions)
+```
+```{r}
+model_cross_no_interactions$results
+```
+
+```{r}
+model_cross_interactions <- train(purchase_mm ~ price_ch + price_mm + loyal_ch + pct_disc_mm + pct_disc_ch + pct_disc_mm:price_mm + pct_disc_ch:loyal_ch,
+               data = juice_cross,
+               trControl = train_control,
+               method = "glm",
+               family = binomial(link = 'logit'))
+```
+
+```{r}
+summary(model_cross_interactions)
+```
+
+```{r}
+model_cross_interactions$results
+```
+
+Both models have AUCs of just under 0.90 for the test data. They are almost excellent classifiers for the test data. The similar values of AUC for test data (0.89) and for training data (0.90) show there is not over-fitting.

@@ -1,0 +1,93 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(tidyverse)
+library(janeaustenr)
+library(tidytext)
+```
+
+
+```{r}
+prideprejudice_collapsed <- paste(prideprejudice, collapse = " ") %>% 
+  str_remove_all("_") 
+```
+```{r}
+sensesensibility_collapsed <- paste(sensesensibility, collapse = " ") %>% 
+  str_remove_all("_") 
+  
+```
+```{r}
+compare <- tibble(
+  book = c("Pride and Prejudice", "Sense and Sensitivity"),
+  text = c(prideprejudice_collapsed, sensesensibility_collapsed)
+)
+```
+
+Most common words in Pride and prejudice.
+```{r}
+common_pride_prejudice <- compare %>% 
+  unnest_tokens(word, text) %>% 
+  count(book, word) %>% 
+  arrange(book, desc(n)) %>% 
+  filter(book == "Pride and Prejudice", row_number() <= 50)
+```
+
+Most common words in Sense and Sensitivity.
+
+```{r}
+common_sense_sensitivity <- compare %>% 
+  unnest_tokens(word, text) %>% 
+  filter(book == "Sense and Sensitivity") %>% 
+  count(book, word) %>% 
+  arrange(desc(n)) %>% 
+  filter(row_number() <= 50)
+```
+
+Most common words in Pride and Prejudice (not including stop words).
+```{r}
+common_pride_prejudice_stop <- compare %>% 
+  unnest_tokens(word, text) %>% 
+  filter(book == "Pride and Prejudice") %>% 
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE) %>% 
+  filter(row_number() <= 50)
+```
+
+Most common words in Sense and Sensitivity (not including stop words).
+
+```{r}
+common_sense_sensitivity_stop <- compare %>% 
+  unnest_tokens(word, text) %>% 
+  filter(book == "Sense and Sensitivity") %>% 
+  anti_join(stop_words) %>%
+  count(word, sort = TRUE) %>% 
+  filter(row_number() <= 50)
+```
+Most common sentiment words in Pride and Prejudice.
+```{r}
+common_pride_prejudice_stop <- compare %>% 
+  unnest_tokens(word, text) %>% 
+  filter(book == "Pride and Prejudice") %>% 
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sort = TRUE) %>% 
+  filter(row_number() <= 50) %>% 
+  inner_join(get_sentiments("bing"))
+```
+
+Most common sentiment words in Sense and Sensitivity.
+
+```{r}
+common_sense_sensitivity_stop <- compare %>% 
+  unnest_tokens(word, text) %>% 
+  filter(book == "Sense and Sensitivity") %>% 
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sort = TRUE) %>% 
+  filter(row_number() <= 50) %>% 
+  inner_join(get_sentiments("bing"))
+```
+
