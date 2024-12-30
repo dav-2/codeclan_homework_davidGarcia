@@ -1,3 +1,5 @@
 *.html linguist-documentation
 *.R linguist-language=R
+*.Rmd linguist-language=R
 *.py linguist-language=Python
+*.ipynb linguist-language=Python
